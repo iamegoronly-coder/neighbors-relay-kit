@@ -153,6 +153,34 @@ class SetupTests(unittest.TestCase):
             with self.assertRaisesRegex(module.SetupError, 'свободного'):
                 self.setup.preflight('binary', 'relay.example.org')
 
+    def test_disk_diagnostics_and_exact_thresholds(self):
+        (self.root / 'proc/meminfo').write_text('MemTotal: 1048576 kB\nSwapTotal: 2097152 kB\n')
+        for lang in ('ru', 'en', 'de'):
+            module.LANGUAGE = lang
+            for mode, filesystem, required in (('binary', '/var/lib', 4 * module.GIB),
+                                               ('source', '/var/lib', 6 * module.GIB),
+                                               ('source', '/opt', 6 * module.GIB)):
+                # A one-byte shortfall rounds to the threshold in GiB; exact bytes
+                # must still explain the refusal. An exact match must be accepted.
+                for free in (required - 1, required):
+                    with self.subTest(lang=lang, mode=mode, filesystem=filesystem, free=free):
+                        def usage(path):
+                            available = free if path == self.setup.path(filesystem) else 20 * module.GIB
+                            return shutil._ntuple_diskusage(20 * module.GIB, 20 * module.GIB - available, available)
+                        self.runner.calls.clear()
+                        before = sorted(str(p.relative_to(self.root)) for p in self.root.rglob('*'))
+                        with patch.object(module.shutil, 'disk_usage', side_effect=usage):
+                            if free < required:
+                                with self.assertRaises(module.SetupError) as error:
+                                    self.setup.preflight(mode, 'relay.example.org')
+                                message = str(error.exception)
+                                for value in (filesystem, str(free), str(required), f'{free / module.GIB:.2f}'):
+                                    self.assertIn(value, message)
+                                self.assertEqual(self.runner.calls, [])
+                            else:
+                                self.assertEqual(self.setup.preflight(mode, 'relay.example.org'), ['192.0.2.1'])
+                        self.assertEqual(before, sorted(str(p.relative_to(self.root)) for p in self.root.rglob('*')))
+
     def test_dns_failure_before_writes(self):
         with patch.object(module.socket, 'getaddrinfo', side_effect=socket.gaierror('not found')):
             with self.assertRaisesRegex(module.SetupError, 'DNS'):

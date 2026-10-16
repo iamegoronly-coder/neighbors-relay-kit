@@ -174,11 +174,15 @@ class Setup:
         if mode == 'source' and sum(memory.values()) < 2.5 * GIB:
             raise SetupError(tr('build_ram_required'))
         required = (6 if mode == 'source' else 4) * GIB
-        if shutil.disk_usage(self.path('/var/lib')).free < required:
-            raise SetupError(tr('disk_required', v0=required // GIB))
+        free = shutil.disk_usage(self.path('/var/lib')).free
+        if free < required:
+            raise SetupError(tr('disk_required', free_gib=free / GIB, free_bytes=free,
+                                required_gib=required // GIB, required_bytes=required))
         if mode == 'source':
-            if shutil.disk_usage(self.path('/opt')).free < 6 * GIB:
-                raise SetupError(tr('build_disk_required'))
+            free = shutil.disk_usage(self.path('/opt')).free
+            if free < 6 * GIB:
+                raise SetupError(tr('build_disk_required', free_gib=free / GIB, free_bytes=free,
+                                    required_gib=6, required_bytes=6 * GIB))
             source = self.path('/opt/strfry-src')
             if source.exists() or source.is_symlink():
                 raise SetupError(tr('source_exists'))
