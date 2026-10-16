@@ -1,0 +1,41 @@
+[Unit]
+Description=Public Nostr relay (Neighbors-compatible strfry)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=nostr-relay
+Group=nostr-relay
+WorkingDirectory=/var/lib/strfry
+ExecStartPre=/usr/local/libexec/strfry-disk-guard check
+ExecStart=/usr/local/bin/strfry --config /etc/strfry/strfry.conf --verbosity=WARNING relay
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=30
+LimitNOFILE=256
+LimitFSIZE=1610612736
+LimitCORE=0
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=64
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+InaccessiblePaths=-/etc/caddy
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET
+ReadWritePaths=/var/lib/strfry/db
+UMask=0077
+LogNamespace=strfry
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

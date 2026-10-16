@@ -1,0 +1,25 @@
+[Unit]
+Description=Prune Nostr relay events older than 48 hours
+After=strfry.service
+
+[Service]
+Type=oneshot
+TimeoutStartSec=90
+User=nostr-relay
+Group=nostr-relay
+WorkingDirectory=/var/lib/strfry
+ExecStart=/usr/local/libexec/strfry-prune-events
+ExecStartPost=/usr/local/libexec/strfry-prune-stamp
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+InaccessiblePaths=-/etc/caddy
+PrivateTmp=yes
+ReadWritePaths=/var/lib/strfry
+UMask=0077
+MemoryMax=256M
+CPUQuota=50%
+LimitCORE=0
+LimitFSIZE=1610612736
+TasksMax=32
+LogNamespace=strfry

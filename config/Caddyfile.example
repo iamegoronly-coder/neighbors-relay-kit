@@ -1,0 +1,35 @@
+# Replace relay.example.org with your domain (DNS A/AAAA record pointing at this server).
+# Caddy 2.10+ obtains the certificate and offers X25519MLKEM768 by default: do not add `curves`.
+{
+    servers {
+        protocols h1 h2
+    }
+}
+
+relay.example.org {
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy no-referrer
+        -Server
+    }
+
+    # Only this exact path reaches strfry; /metrics stays on loopback.
+    @nostr_relay path /relay
+    handle @nostr_relay {
+        rewrite * /
+        reverse_proxy 127.0.0.1:7777 {
+            # Counts active requests for the whole WebSocket lifetime: an early 503 barrier
+            # before strfry's own relay.maxConnections limit.
+            fail_duration 10s
+            max_fails 3
+            unhealthy_request_count 100
+            transport http {
+                dial_timeout 3s
+            }
+        }
+    }
+
+    handle {
+        respond "Not Found" 404
+    }
+}

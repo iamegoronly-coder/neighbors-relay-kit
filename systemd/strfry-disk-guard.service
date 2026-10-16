@@ -1,0 +1,12 @@
+[Unit]
+Description=Stop only the Nostr relay before its database threatens shared disk
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/strfry-disk-guard enforce
+NoNewPrivileges=yes
+ProtectHome=yes
+InaccessiblePaths=-/etc/caddy
+ProtectSystem=strict
+ReadWritePaths=/run
+LogNamespace=strfry

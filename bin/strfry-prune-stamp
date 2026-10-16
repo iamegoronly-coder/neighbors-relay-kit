@@ -1,0 +1,3 @@
+#!/bin/sh
+set -eu
+date -u +%Y-%m-%dT%H:%M:%SZ > /var/lib/strfry/last-prune

@@ -1,0 +1,32 @@
+#!/bin/sh
+# Refuses to continue unless the installed Caddy offers hybrid post-quantum TLS by default.
+# Caddy 2.10+ (Go 1.24+) negotiates X25519MLKEM768; Ubuntu 24.04's packaged 2.6.2 does not.
+# Install Caddy from the official Cloudsmith repository first (docs/caddy.md).
+set -eu
+
+MIN_MAJOR=2
+MIN_MINOR=10
+
+if ! command -v caddy >/dev/null 2>&1; then
+    echo "require-pq-caddy: Caddy is not installed. Install Caddy ${MIN_MAJOR}.${MIN_MINOR}+ from Cloudsmith first (docs/caddy.md)." >&2
+    exit 1
+fi
+
+# "v2.11.7 h1:..." (upstream) or "2.6.2" (Ubuntu build).
+raw=$(caddy version | awk 'NR==1 {print $1}')
+version=${raw#v}
+major=$(printf '%s' "$version" | cut -d. -f1)
+minor=$(printf '%s' "$version" | cut -d. -f2)
+
+case "$major$minor" in
+    ''|*[!0-9]*)
+        echo "require-pq-caddy: cannot parse the Caddy version: '$raw'." >&2
+        exit 1 ;;
+esac
+
+if [ "$major" -lt "$MIN_MAJOR" ] || { [ "$major" -eq "$MIN_MAJOR" ] && [ "$minor" -lt "$MIN_MINOR" ]; }; then
+    echo "require-pq-caddy: Caddy $version does not offer post-quantum TLS (needs ${MIN_MAJOR}.${MIN_MINOR}+). Upgrade with docs/caddy.md." >&2
+    exit 1
+fi
+
+echo "require-pq-caddy: Caddy $version offers X25519MLKEM768 by default."

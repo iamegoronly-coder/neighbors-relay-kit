@@ -1,0 +1,7 @@
+{
+  "status": "local-unpublished",
+  "version": "candidate-20261015",
+  "sha256": "be71c12620a1eee1fcc436b9ce0dfa0ce7cb69f2747a5cd00062b811b1c3a18d",
+  "patch_sha256": "c6d67a1e8103bc538a70409ec92484636d3e3ddaec62f65b00022796d0634407",
+  "caddy_version": "2.11.7"
+}

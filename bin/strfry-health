@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""Local, aggregate-only health report for the public relay."""
+
+import json
+import os
+import subprocess
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+
+MAX_DATABASE_BYTES = 1536 * 1024 * 1024
+MIN_FREE_BYTES = 2 * 1024 * 1024 * 1024
+MAX_PRUNE_AGE_SECONDS = 300
+
+
+def health_errors(report: dict, now: datetime) -> list[str]:
+    errors = []
+    for field in ("relay_active", "loopback_metrics_ok", "prune_timer_active",
+                  "disk_guard_timer_active", "ntp_synchronized"):
+        if not report.get(field):
+            errors.append(field)
+    try:
+        stamp = datetime.fromisoformat(report["last_prune_utc"].replace("Z", "+00:00"))
+        age = (now - stamp).total_seconds()
+        if not -30 <= age <= MAX_PRUNE_AGE_SECONDS:
+            errors.append("prune_timestamp_stale_or_future")
+    except (KeyError, TypeError, ValueError, AttributeError):
+        errors.append("prune_timestamp_missing_or_invalid")
+    if report["data_bytes"] >= MAX_DATABASE_BYTES:
+        errors.append("database_budget_exceeded")
+    if report["filesystem_free_bytes"] <= MIN_FREE_BYTES:
+        errors.append("disk_reserve_exhausted")
+    return errors
+
+
+def active(unit: str) -> bool:
+    result = subprocess.run(
+        ["/usr/bin/systemctl", "is-active", "--quiet", unit], check=False, timeout=5
+    )
+    return result.returncode == 0
+
+
+def local_metrics() -> bool:
+    try:
+        with urllib.request.urlopen("http://127.0.0.1:7777/metrics", timeout=2) as response:
+            return response.status == 200 and b"#" in response.read(4096)
+    except OSError:
+        return False
+
+
+def established_connections() -> int:
+    count = 0
+    for file_name in ("/proc/net/tcp", "/proc/net/tcp6"):
+        try:
+            lines = Path(file_name).read_text().splitlines()[1:]
+        except OSError:
+            continue
+        for line in lines:
+            parts = line.split()
+            if parts[1].rsplit(":", 1)[-1] == "1E61" and parts[3] == "01":
+                count += 1
+    return count
+
+
+def main() -> int:
+    database_dir = Path("/var/lib/strfry/db")
+    data_bytes = sum(path.stat().st_size for path in database_dir.iterdir() if path.is_file())
+    fs = os.statvfs(database_dir)
+    prune_file = Path("/var/lib/strfry/last-prune")
+    last_prune = prune_file.read_text().strip() if prune_file.exists() else None
+    cgroup_mem = Path("/sys/fs/cgroup/system.slice/strfry.service/memory.current")
+    memory_bytes = int(cgroup_mem.read_text()) if cgroup_mem.exists() else None
+    ntp = subprocess.run(["/usr/bin/timedatectl", "show", "-p", "NTPSynchronized", "--value"],
+                         capture_output=True, text=True, check=False, timeout=5)
+    now = datetime.now(timezone.utc)
+    report = {
+        "relay_active": active("strfry.service"),
+        "loopback_metrics_ok": local_metrics(),
+        "connections_established": established_connections(),
+        "data_bytes": data_bytes,
+        "filesystem_free_bytes": fs.f_bavail * fs.f_frsize,
+        "memory_bytes": memory_bytes,
+        "last_prune_utc": last_prune,
+        "prune_timer_active": active("strfry-prune.timer"),
+        "disk_guard_timer_active": active("strfry-disk-guard.timer"),
+        "ntp_synchronized": ntp.returncode == 0 and ntp.stdout.strip() == "yes",
+        "checked_at_utc": now.isoformat(),
+    }
+    report["errors"] = health_errors(report, now)
+    report["healthy"] = not report["errors"]
+    print(json.dumps(report, sort_keys=True))
+    return 0 if report["healthy"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

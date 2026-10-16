@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""Delete only exact IDs recorded by one smoke run; dry run unless --execute is given.
+
+The manifest is operator-supplied authorization. Never use an untrusted manifest.
+No content-prefix search or whole-database scan is performed.
+"""
+import argparse
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+def read_manifest(path, relay):
+    if path.stat().st_size > 2 * 1024 * 1024:
+        raise ValueError("manifest exceeds 2 MiB")
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if not lines:
+        raise ValueError("empty manifest")
+    header = json.loads(lines[0])
+    if not isinstance(header, dict) or header.get("version") != 1 or header.get("relay") != relay:
+        raise ValueError("manifest version or relay URL does not match --relay")
+    if not re.fullmatch(r"[0-9a-f]{32}", str(header.get("run_id", ""))):
+        raise ValueError("invalid run ID")
+    ids = []
+    seen = set()
+    for line in lines[1:]:
+        record = json.loads(line)
+        if (not isinstance(record, dict) or set(record) != {"id", "pubkey"} or
+                any(not isinstance(record[key], str) or not re.fullmatch(r"[0-9a-f]{64}", record[key])
+                    for key in ("id", "pubkey"))):
+            raise ValueError("invalid event record; refusing all deletion")
+        if record["id"] not in seen:
+            seen.add(record["id"])
+            ids.append(record["id"])
+    return ids
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--manifest", required=True, type=Path, help="manifest copied from your smoke-test machine")
+    parser.add_argument("--relay", required=True, help="exact WSS URL of the local relay being cleaned")
+    parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--binary", default="/usr/local/bin/strfry")
+    parser.add_argument("--config", default="/etc/strfry/strfry.conf")
+    args = parser.parse_args()
+    try:
+        ids = read_manifest(args.manifest, args.relay)
+    except (OSError, ValueError) as error:
+        print(f"cleanup: {error}; no deletion", file=sys.stderr)
+        return 1
+    print(json.dumps({"relay": args.relay, "event_ids": ids, "execute": args.execute}, sort_keys=True))
+    if args.execute:
+        command = [args.binary, "--config", args.config, "--verbosity=WARNING"]
+        for offset in range(0, len(ids), 100):
+            subprocess.run(command + ["delete", "--filter", json.dumps({"ids": ids[offset:offset + 100]})],
+                           check=True, stdout=subprocess.DEVNULL)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

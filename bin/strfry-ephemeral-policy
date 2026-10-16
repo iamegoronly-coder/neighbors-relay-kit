@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""strfry writePolicy: bound future timestamps of ephemeral kinds only.
+
+Normal envelopes retain the configured 20-minute skew tolerance. For
+ephemeral kinds, 60s future tolerance plus 90s lifetime and a 2-minute
+maintenance interval keeps the technical disk buffer under about 5 minutes.
+No IP, event body, key, or tag is logged or stored by this plugin.
+"""
+
+import json
+import sys
+
+for line in sys.stdin:
+    try:
+        message = json.loads(line)
+        event = message["event"]
+        result = {"id": event["id"], "action": "accept"}
+        if (20000 <= event["kind"] < 30000
+                and event["created_at"] > message["receivedAt"] + 60):
+            result = {
+                "id": event["id"],
+                "action": "reject",
+                "msg": "blocked: ephemeral timestamp too far in future",
+            }
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        # strfry expects one response per event; a malformed plugin input is
+        # an operational error and should never be silently accepted.
+        raise SystemExit(1)
+    print(json.dumps(result, separators=(",", ":")), flush=True)

@@ -1,0 +1,203 @@
+--- a/golpe.yaml
++++ b/golpe.yaml
+@@ -27,6 +27,7 @@
+   ## Primary key is auto-incremented, called "levId" for Local EVent ID
+   Event:
+     opaque: true
++    primaryKey: levId
+ 
+     indices:
+       created_at:
+@@ -102,6 +103,10 @@
+         type: string
+ 
+ tablesRaw:
++  # Monotonic allocation watermark; contains no event or user data.
++  EventSequence:
++    flags: 'MDB_INTEGERKEY'
++
+   ## Raw nostr event JSON, possibly compressed
+   ## keys are levIds
+   ## vals are prefixed with a type byte:
+--- a/src/DBQuery.h
++++ b/src/DBQuery.h
+@@ -5,6 +5,7 @@
+ #include "Subscription.h"
+ #include "filters.h"
+ #include "events.h"
++#include "RelayEventExpiry.h"
+ 
+ 
+ struct DBScan : NonCopyable {
+@@ -282,6 +283,7 @@
+ 
+ struct DBQuery : NonCopyable {
+     Subscription sub;
++    bool skipExpired = false;
+ 
+     std::unique_ptr<DBScan> scanner;
+     size_t filterGroupIndex = 0;
+@@ -312,6 +314,11 @@
+ 
+                 // If this event came in after our query began, don't send it. It will be sent after the EOSE.
+                 if (levId > sub.latestEventId) return false;
++
++                if (skipExpired) {
++                    auto event = env.lookup_Event(txn, levId);
++                    if (!event || relayEventExpired(PackedEventView(event->buf))) return false;
++                }
+ 
+                 if (sentEventsFull.find(levId) == sentEventsFull.end()) {
+                     sentEventsFull.insert(levId);
+--- a/src/events.cpp
++++ b/src/events.cpp
+@@ -187,6 +187,10 @@
+         return false;
+     }, true);
+ 
++    std::string_view watermark;
++    if (env.dbi_EventSequence.get(txn, lmdb::to_sv<uint64_t>(1), watermark)) {
++        levId = std::max(levId, lmdb::from_sv<uint64_t>(watermark));
++    }
+     return levId;
+ }
+ 
+@@ -237,6 +241,9 @@
+ // Do not use externally: does not handle negentropy trees
+ 
+ bool deleteEventBasic(lmdb::txn &txn, uint64_t levId) {
++    // Seed the watermark even when pruning a database first opened by this build.
++    auto watermark = getMostRecentLevId(txn);
++    env.dbi_EventSequence.put(txn, lmdb::to_sv<uint64_t>(1), lmdb::to_sv<uint64_t>(watermark));
+     bool deleted = env.dbi_EventPayload.del(txn, lmdb::to_sv<uint64_t>(levId));
+     env.delete_Event(txn, levId);
+     return deleted;
+@@ -401,7 +408,12 @@
+             }
+ 
+             if (ev.status == EventWriteStatus::Pending) {
+-                ev.levId = env.insert_Event(txn, ev.packedStr);
++                // The writer transaction serializes allocation across processes.
++                // Deleting the last retained event must not reuse an ID observed by a live REQ.
++                auto lastId = getMostRecentLevId(txn);
++                if (lastId == MAX_U64) throw herr("event sequence exhausted");
++                ev.levId = env.insert_Event(txn, lastId + 1, ev.packedStr);
++                env.dbi_EventSequence.put(txn, lmdb::to_sv<uint64_t>(1), lmdb::to_sv<uint64_t>(ev.levId));
+ 
+                 tmpBuf.clear();
+                 tmpBuf += '\x00';
+--- /dev/null
++++ b/src/RelayEventExpiry.h
+@@ -0,0 +1,14 @@
++#pragma once
++
++#include "golpe.h"
++#include "PackedEvent.h"
++
++// Read-time policy is independent of asynchronous physical deletion.
++inline bool relayEventExpired(const PackedEventView &event) {
++    const auto now = hoytech::curr_time_s();
++    const auto expiry = event.expiration();
++    if (expiry > 1 && expiry <= now) return true;
++    const auto lifetime = expiry == 1 ? cfg().events__ephemeralEventsLifetimeSeconds
++                                      : cfg().events__rejectEventsOlderThanSeconds;
++    return event.created_at() <= now && now - event.created_at() >= lifetime;
++}
+--- a/src/QueryScheduler.h
++++ b/src/QueryScheduler.h
+@@ -11,6 +11,7 @@
+     // If false, then levIds returned to above callbacks can be stale (because they were deleted)
+     // If false, then onEvent's eventPayload will always be ""
+     bool ensureExists = true;
++    bool skipExpired = false;
+ 
+     using ConnQueries = flat_hash_map<SubId, DBQuery*>;
+     flat_hash_map<uint64_t, ConnQueries> conns; // connId -> subId -> DBQuery*
+@@ -33,6 +34,7 @@
+         }
+ 
+         DBQuery *q = new DBQuery(sub);
++        q->skipExpired = skipExpired;
+ 
+         connQueries.try_emplace(q->sub.subId, q);
+         running.push_front(q);
+--- a/src/apps/relay/golpe.yaml
++++ b/src/apps/relay/golpe.yaml
+@@ -1,4 +1,7 @@
+ config:
++  - name: relay__maxConnections
++    desc: "Maximum active WebSocket connections (0 means unlimited)"
++    default: 0
+   - name: relay__bind
+     desc: "Interface to listen on. Use 0.0.0.0 to listen on all interfaces"
+     default: "127.0.0.1"
+--- a/src/apps/relay/RelayCron.cpp
++++ b/src/apps/relay/RelayCron.cpp
+@@ -19,7 +19,6 @@
+         {
+             auto txn = env.txn_ro();
+ 
+-            auto mostRecent = getMostRecentLevId(txn);
+             uint64_t now = hoytech::curr_time_s();
+             uint64_t ephemeralCutoff = now - cfg().events__ephemeralEventsLifetimeSeconds;
+ 
+@@ -28,7 +27,6 @@
+                 auto levId =  lmdb::from_sv<uint64_t>(v);
+ 
+                 if (expiration > now) return false;
+-                if (levId == mostRecent) return true; // don't delete because it could cause levId re-use
+ 
+                 if (expiration == 1) { // Ephemeral event
+                     auto view = env.lookup_Event(txn, levId);
+--- a/src/apps/relay/RelayReqMonitor.cpp
++++ b/src/apps/relay/RelayReqMonitor.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include "ActiveMonitors.h"
+ #include "ReadRestrictor.h"
++#include "RelayEventExpiry.h"
+ 
+ 
+ 
+@@ -36,7 +37,7 @@
+ 
+                 env.foreach_Event(txn, [&](auto &ev){
+                     PackedEventView packed(ev.buf);
+-                    if (msg->sub.filterGroup.doesMatch(packed)) {
++                    if (!relayEventExpired(packed) && msg->sub.filterGroup.doesMatch(packed)) {
+                         if (ReadRestrictor::shouldSendToSubscriber(packed, connAuthedPubkey)) {
+                             sendEvent(connId, msg->sub.subId, getEventJson(txn, decomp, ev.primaryKeyId));
+                         }
+@@ -59,6 +60,7 @@
+                 monitors.closeConn(msg->connId);
+             } else if (std::get_if<MsgReqMonitor::DBChange>(&newMsg.msg)) {
+                 env.foreach_Event(txn, [&](auto &ev){
++                    if (relayEventExpired(PackedEventView(ev.buf))) return true;
+                     monitors.process(txn, ev, [&](RecipientList &&recipients, uint64_t levId){
+                         PackedEventView packed(ev.buf);
+                         if (ReadRestrictor::restrictedKinds().contains(packed.kind())) {
+--- a/src/apps/relay/RelayWebsocket.cpp
++++ b/src/apps/relay/RelayWebsocket.cpp
+@@ -279,6 +279,12 @@
+         ;
+ 
+         PrometheusMetrics::getInstance().activeConnections.inc();
++
++        // This callback runs on the single websocket loop: no check/increment race.
++        if (cfg().relay__maxConnections && connIdToConnection.size() > cfg().relay__maxConnections) {
++            ws->close(1013, "relay connection limit");
++            return;
++        }
+ 
+         if (cfg().relay__enableTcpKeepalive) {
+             int optval = 1;
+--- a/src/apps/relay/RelayReqWorker.cpp
++++ b/src/apps/relay/RelayReqWorker.cpp
+@@ -6,6 +6,7 @@
+ void RelayServer::runReqWorker(ThreadPool<MsgReqWorker>::Thread &thr) {
+     Decompressor decomp;
+     QueryScheduler queries;
++    queries.skipExpired = true;
+     flat_hash_map<uint64_t, Bytes32> connIdToAuthedPubkey;
+ 
+     queries.onEvent = [&](lmdb::txn &txn, const auto &sub, uint64_t levId, std::string_view eventPayload){

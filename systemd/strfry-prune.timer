@@ -1,0 +1,12 @@
+[Unit]
+Description=Prune Nostr relay history and expired events every two minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+AccuracySec=10s
+Persistent=true
+Unit=strfry-prune.service
+
+[Install]
+WantedBy=timers.target
