@@ -4,7 +4,9 @@
 
 `setup.sh` installiert Abhängigkeiten, Caddy, Relay und Timer und prüft HTTPS. Die Umsetzung steht in `scripts/setup-relay.py`, `scripts/install.sh` und den Konfigurationsdateien. Prüfen Sie diese vor der Ausführung als root. Klonen ermöglicht eine Prüfung, garantiert aber keine Sicherheit.
 
-**Status:** noch nicht öffentlich veröffentlicht. Der Assistent wurde noch nicht vollständig auf einem neuen VPS erprobt. Er unterstützt Englisch, Russisch und Deutsch (`--lang en|ru|de`). Die veröffentlichte App nutzt die eingebauten Relays; eine Einstellung für eigene Relays folgt später. Dieses Relay verwendet kein AUTH: Jeder, der die Adresse kennt, kann sich verbinden.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.2` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+
+**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.2 enthält die verbesserte Speicherplatzdiagnose und bestand lokale Tests, wurde aber noch nicht auf einem frischen VPS installiert. Die App-Einstellung für eigene Relays ist noch geplant; das Relay hat kein AUTH, jeder mit Kenntnis der Adresse kann sich verbinden.
 
 ## Sprachauswahl
 
@@ -20,13 +22,62 @@ Bei `sudo sh setup.sh` fragt der interaktive Assistent zuerst nach der Sprache. 
 
 Der Assistent zeigt DNS-Adressen, beweist aber nicht, dass sie diesem VPS gehören. Vergleichen Sie diese mit dem Hosting-Panel. Vorhandene Caddy-/Relay-Dateien oder belegte Ports 80/443/7777 stoppen die Installation. Für vorhandene Server gilt die [manuelle Anleitung](deployment.de.md); löschen Sie keine Konfiguration, um diese Prüfung zu umgehen.
 
+## Zwei Befehle nach öffentlicher Veröffentlichung
+
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.2` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+
+Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
+
+Benötigt werden `curl`, `ca-certificates`, `tar`, `sha256sum`, Python 3 und sudo/root; für Quellen auch Git. Fehlende Download-/Clone-Werkzeuge einmalig installieren:
+
+```sh
+sudo apt-get update && sudo apt-get -o DPkg::Lock::Timeout=600 install -y ca-certificates curl git
+```
+
+Bei Anmeldung als root kann `sudo` entfallen.
+
+1. Das Archiv der festgelegten Version in ein neues temporäres Verzeichnis herunterladen:
+
+```sh
+relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
+curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
+  --output "$relay_work/neighbors-relay-v0.1.0-test.2.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.2/neighbors-relay-v0.1.0-test.2.tar.gz
+```
+
+2. In derselben SSH-Sitzung die festgelegte Prüfsumme prüfen, dann entpacken und den Assistenten starten:
+
+```sh
+(cd "${relay_work:?Run the download command first}" &&
+  printf '%s  %s\n' '1f4b9832d9bd149be5e453c7ce5fe7886bac8267938a8dfabe0b8e1cfda2cf7e' 'neighbors-relay-v0.1.0-test.2.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz &&
+  cd neighbors-relay && sudo sh setup.sh)
+```
+
+Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Die Prüfsumme steht fest in dieser Anleitung und stammt nicht nur aus einem benachbarten Download; sie ist keine Release-Signatur.
+
+### Klonen und aus Quellen bauen
+
+Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
+
+```sh
+git clone --branch v0.1.0-test.2 --single-branch \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
+```
+
+```sh
+(cd neighbors-relay-source && sudo sh setup.sh --mode source)
+```
+
+Der Quellmodus lädt festgelegte Quellen und kompiliert das Relay, statt eine fertige Relay-Binärdatei zu verwenden. Er benötigt mindestens 2,5 GiB RAM + Swap und 6 GiB freien Speicher auf `/var/lib` und `/opt` (insgesamt 6 GiB bei gemeinsamem Dateisystem). Native Ubuntu-Builds können andere Hashes haben; für bytegenauen Vergleich den kanonischen Docker-Build nutzen.
+
 ## Lokales Binärpaket
 
 Archiv und `.sha256` auf den VPS kopieren, prüfen und in ein leeres Arbeitsverzeichnis entpacken, nicht über einen vorhandenen Checkout:
 
 ```sh
-sha256sum -c neighbors-relay-local-20261015.tar.gz.sha256
-tar -xzf neighbors-relay-local-20261015.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.2.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -50,18 +101,6 @@ sudo sh setup.sh --mode binary --domain relay.example.org \
 
 `EXPECTED_SHA256` vorher aus einem geprüften Build oder authentifizierten Release-Nachweis beziehen. Nach Prüfung des Plans kann eine Automatisierung `--yes` verwenden; sonst schlägt die nichtinteraktive Installation fehl. `--tls-timeout 600` verlängert die HTTPS-Wartezeit von 180 auf 600 Sekunden.
 
-## Quellcode-Checkout oder später git clone
-
-Aus einer lokalen Kopie ohne Binärdatei:
-
-```sh
-cd neighbors-relay
-sudo sh setup.sh --mode source
-```
-
-Dies lädt die festgelegten strfry-Quellen, wendet den Patch an, kompiliert mit Ubuntus Werkzeugen und führt dieselbe Caddy-/Dienstinstallation aus. Es lädt kein fertiges Relay und verwendet keine mitgelieferte Binärdatei. Nach Veröffentlichung: konkreten Tag klonen, ins Verzeichnis wechseln, diesen Befehl ausführen. Eine öffentliche Repository-URL/ein öffentlicher Tag existiert noch nicht; Git muss zum Klonen bereits installiert sein.
-
-Ein nativer Ubuntu-Build kann einen anderen SHA-256 haben. Für einen bytegenauen Vergleich verwenden Sie den [kanonischen Docker-Build](deployment.de.md#canonical-build-for-byte-for-byte-comparison) auf einem separaten Build-Rechner und übergeben das Ergebnis mit `--binary` und `--sha256`. Zwei funktionierende VPS beweisen allein keine Binärgleichheit.
 
 ## Prüfung und Wiederherstellung
 
@@ -98,7 +137,11 @@ Die Installation ändert weder SSH, Firewall noch DNS, legt keinen Swap an und s
 Auf dem Vorbereitungsrechner mit `out/candidate-20261015` und Python 3.11+:
 
 ```sh
-python3 scripts/package-local.py --output out/neighbors-relay-local-20261015.tar.gz
+python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz
 ```
 
 Das Packwerkzeug prüft Binärdatei, Quellen, Patch, Toolchain-Lock und Manifest. Es übernimmt nur freigegebene Kit-Verzeichnisse und Kandidatendateien, schließt `.git`, andere `out`-Dateien, die `.env` im Stammverzeichnis und Python-Caches aus und lehnt symbolische Links ab. Keine Geheimnisse in Dokumentation/Konfiguration/Skripten ablegen: Diese Verzeichnisse werden übernommen. Vorhandene Archive werden nie überschrieben. Nichts wird hochgeladen.
+
+## Vor dem öffentlichen Start
+
+Vor dem öffentlichen Start das endgültige Release auswählen und prüfen, Tag, Archivname und festgelegten SHA-256 gemeinsam in allen drei READMEs und Schnellstartanleitungen aktualisieren und beide Wege auf frischen VPS testen. Nach Veröffentlichung anonymen Download von einem Rechner ohne GitHub-Zugangsdaten prüfen. Keine vorhandenen Release-Dateien ersetzen, um eine alte Prüfsumme passend zu machen. Sichtbarkeitsänderungen benötigen eine separate Entscheidung; diese Anleitung erteilt keine Freigabe zur Veröffentlichung.

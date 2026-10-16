@@ -69,17 +69,54 @@ Siehe [beide Wege und Vergleich](docs/deployment.de.md). Es gibt noch kein öffe
 
 ## Installation
 
-Auf **neuem Ubuntu 24.04 x86_64** das lokale Paket entpacken und Assistenten starten:
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.2` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+
+Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
+
+Benötigt werden `curl`, `ca-certificates`, `tar`, `sha256sum`, Python 3 und sudo/root; für Quellen auch Git. Fehlende Download-/Clone-Werkzeuge einmalig installieren:
 
 ```sh
-tar -xzf neighbors-relay-local-20261015.tar.gz
-cd neighbors-relay
-sudo sh setup.sh
+sudo apt-get update && sudo apt-get -o DPkg::Lock::Timeout=600 install -y ca-certificates curl git
 ```
 
-Domain und Binär-/Quellmodus wählen, danach Plan vor Bestätigung lesen. Zuerst DNS und TCP 80/443 vorbereiten. Auf kleinem VPS die mitgelieferte Binärdatei bevorzugen. Ein reiner Quell-Checkout kann `sudo sh setup.sh --mode source` verwenden; Kompilieren benötigt mehr Ressourcen.
+Bei Anmeldung als root kann `sudo` entfallen.
 
-Dies ist ein **lokales, nicht öffentlich veröffentlichtes Paket**; es gibt keine öffentliche GitHub-URL und keinen automatischen Relay-Download. Der Assistent ist lokal getestet, aber noch nicht vollständig auf einem neuen VPS erprobt. Er unterstützt Englisch, Russisch und Deutsch (`--lang en|ru|de`). Siehe [Schnellstart und Wiederherstellung](docs/quickstart.de.md).
+1. Das Archiv der festgelegten Version in ein neues temporäres Verzeichnis herunterladen:
+
+```sh
+relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
+curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
+  --output "$relay_work/neighbors-relay-v0.1.0-test.2.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.2/neighbors-relay-v0.1.0-test.2.tar.gz
+```
+
+2. In derselben SSH-Sitzung die festgelegte Prüfsumme prüfen, dann entpacken und den Assistenten starten:
+
+```sh
+(cd "${relay_work:?Run the download command first}" &&
+  printf '%s  %s\n' '1f4b9832d9bd149be5e453c7ce5fe7886bac8267938a8dfabe0b8e1cfda2cf7e' 'neighbors-relay-v0.1.0-test.2.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz &&
+  cd neighbors-relay && sudo sh setup.sh)
+```
+
+Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Die Prüfsumme steht fest in dieser Anleitung und stammt nicht nur aus einem benachbarten Download; sie ist keine Release-Signatur.
+
+### Klonen und aus Quellen bauen
+
+Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
+
+```sh
+git clone --branch v0.1.0-test.2 --single-branch \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
+```
+
+```sh
+(cd neighbors-relay-source && sudo sh setup.sh --mode source)
+```
+
+Der Quellmodus lädt festgelegte Quellen und kompiliert das Relay, statt eine fertige Relay-Binärdatei zu verwenden. Er benötigt mindestens 2,5 GiB RAM + Swap und 6 GiB freien Speicher auf `/var/lib` und `/opt` (insgesamt 6 GiB bei gemeinsamem Dateisystem). Native Ubuntu-Builds können andere Hashes haben; für bytegenauen Vergleich den kanonischen Docker-Build nutzen.
+
+[Schnellstart](docs/quickstart.de.md) · [Build / Vergleich](docs/deployment.de.md)
 
 <a id="manual-installation"></a>
 ### Manuelle Installation

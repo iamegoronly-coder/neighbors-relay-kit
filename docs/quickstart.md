@@ -6,10 +6,9 @@
 is in `scripts/setup-relay.py`, `scripts/install.sh` and this kit's configuration files. Read them
 before running as root. Cloning makes inspection possible; it does not itself make code safe.
 
-**Status:** local and unpublished. The wizard has not yet completed a fresh-VPS end-to-end trial.
-The wizard supports English, Russian and German (`--lang en|ru|de`). The released app uses its built-in
-relays; a setting for custom relays is still planned. This relay has no AUTH; anyone who knows its
-address can connect, not just invited participants.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.2` is a test release, not a production recommendation.
+
+**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.2 contains updated disk diagnostics and passed local tests, but has not yet been installed on a fresh VPS. The app setting for custom relays is still planned; this relay has no AUTH, so anyone who knows its address can connect.
 
 ## Language selection
 
@@ -31,14 +30,63 @@ against your hosting panel. Existing Caddy/relay files or listeners on 80/443/77
 before installation. Use the [manual guide](deployment.md) for an existing server; do not delete
 its configuration merely to bypass this protection.
 
+## Two commands after public release
+
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.2` is a test release, not a production recommendation.
+
+For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
+
+Commands assume `curl`, `ca-certificates`, `tar`, `sha256sum`, Python 3 and sudo/root; the source path also needs Git. If missing, install the download/clone tools once:
+
+```sh
+sudo apt-get update && sudo apt-get -o DPkg::Lock::Timeout=600 install -y ca-certificates curl git
+```
+
+When logged in as root, omit `sudo`.
+
+1. Download the pinned archive into a new temporary directory:
+
+```sh
+relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
+curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
+  --output "$relay_work/neighbors-relay-v0.1.0-test.2.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.2/neighbors-relay-v0.1.0-test.2.tar.gz
+```
+
+2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
+
+```sh
+(cd "${relay_work:?Run the download command first}" &&
+  printf '%s  %s\n' '1f4b9832d9bd149be5e453c7ce5fe7886bac8267938a8dfabe0b8e1cfda2cf7e' 'neighbors-relay-v0.1.0-test.2.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz &&
+  cd neighbors-relay && sudo sh setup.sh)
+```
+
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. The checksum is pinned here rather than trusted only from a neighboring download; it is not a release signature.
+
+### Clone and build from source
+
+After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
+
+```sh
+git clone --branch v0.1.0-test.2 --single-branch \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
+```
+
+```sh
+(cd neighbors-relay-source && sudo sh setup.sh --mode source)
+```
+
+Source mode fetches pinned upstream sources and builds the relay instead of using a prebuilt relay binary. It needs at least 2.5 GiB RAM + swap and 6 GiB free on `/var/lib` and `/opt` (6 GiB total if shared). Native Ubuntu builds may have different hashes; use the canonical Docker build for byte-for-byte comparison.
+
 ## Local binary bundle
 
 Copy the archive and its `.sha256` file to the VPS. Verify and extract into an empty working
 location, not over another checkout:
 
 ```sh
-sha256sum -c neighbors-relay-local-20261015.tar.gz.sha256
-tar -xzf neighbors-relay-local-20261015.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.2.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -71,24 +119,6 @@ Obtain `EXPECTED_SHA256` from a checked build or an authenticated release record
 reviewing the plan, automation can use `--yes`; noninteractive installation otherwise fails.
 Use `--tls-timeout 600` to increase HTTPS waiting from 180 to 600 seconds.
 
-## Source checkout or future git clone
-
-From a local source-only copy:
-
-```sh
-cd neighbors-relay
-sudo sh setup.sh --mode source
-```
-
-This fetches pinned strfry sources, applies the patch, builds with Ubuntu's toolchain and runs the
-same Caddy/service installation. It does not download a ready-made relay or use the bundled binary.
-After publication the process will be: clone a specific tag, enter the directory, run this command.
-No public repository URL/tag exists yet; Git itself must be installed before cloning.
-
-A native Ubuntu build can have a different SHA-256. For byte-for-byte verification use the
-[canonical Docker build and comparison](deployment.md#canonical-build-for-byte-for-byte-comparison)
-on a separate build machine, then pass the resulting file with `--binary` and `--sha256`.
-Two functioning VPSs alone do not prove binary equality.
 
 ## Verification and recovery
 
@@ -136,10 +166,14 @@ operator updates; follow the [upgrade/rollback guide](caddy.md#upgrading).
 On the preparation machine with `out/candidate-20261015` and Python 3.11+:
 
 ```sh
-python3 scripts/package-local.py --output out/neighbors-relay-local-20261015.tar.gz
+python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz
 ```
 
 The packager checks the binary, sources, patch, toolchain lock and manifest. It only includes the
 allowlisted kit directories and candidate assets, excluding `.git`, other `out` files, root `.env`
 and Python caches, and refusing symlinks. Keep secrets out of documentation/configuration/script
 directories: their contents are included. Existing archives are never overwritten. Nothing is uploaded.
+
+## Before public launch
+
+Before public launch, select and validate the final release, update the tag, asset name and pinned archive SHA-256 together in all three READMEs and quickstarts, and test both paths on clean VPSs. After publication, verify an anonymous download from a machine without GitHub credentials. Never replace an existing release asset to make an old checksum work. Visibility changes require a separate decision; these instructions do not authorize publication.

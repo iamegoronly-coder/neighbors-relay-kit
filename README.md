@@ -98,8 +98,7 @@ installer. For independent comparison, use the pinned canonical Docker build and
 result byte-for-byte with the release file. The native Ubuntu build remains available but is
 not guaranteed to produce the same hash with different compiler/library versions.
 
-See [both deployment paths and verification](docs/deployment.md). This local draft does not yet
-have a published GitHub Release or signing identity. The local `setup.sh` wizard now prepares
+See [both deployment paths and verification](docs/deployment.md). Private test Releases are available; no signing identity is configured. The local `setup.sh` wizard now prepares
 dependencies, Caddy, the domain, relay and timers on a clean VPS.
 The installer preserves the exact verified binary bytes.
 Two clean local canonical builds matched byte-for-byte; see the
@@ -107,20 +106,54 @@ Two clean local canonical builds matched byte-for-byte; see the
 
 ## Install
 
-On **clean Ubuntu 24.04 x86_64**, extract the local bundle and start the wizard:
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.2` is a test release, not a production recommendation.
+
+For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
+
+Commands assume `curl`, `ca-certificates`, `tar`, `sha256sum`, Python 3 and sudo/root; the source path also needs Git. If missing, install the download/clone tools once:
 
 ```sh
-tar -xzf neighbors-relay-local-20261015.tar.gz
-cd neighbors-relay
-sudo sh setup.sh
+sudo apt-get update && sudo apt-get -o DPkg::Lock::Timeout=600 install -y ca-certificates curl git
 ```
 
-It asks for the domain and a binary/source choice, then displays a plan before confirmation.
-Point DNS at the VPS and allow TCP 80/443 first. Prefer the bundled binary on a small VPS.
-A source-only checkout can use `sudo sh setup.sh --mode source`; compilation needs more resources.
+When logged in as root, omit `sudo`.
 
-This is a **local, unpublished bundle**; there is no public GitHub URL or automatic relay download.
-The wizard has local tests but has not yet completed a fresh-VPS end-to-end trial. The wizard supports English, Russian and German (`--lang en|ru|de`). See the [quickstart and recovery guide](docs/quickstart.md).
+1. Download the pinned archive into a new temporary directory:
+
+```sh
+relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
+curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
+  --output "$relay_work/neighbors-relay-v0.1.0-test.2.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.2/neighbors-relay-v0.1.0-test.2.tar.gz
+```
+
+2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
+
+```sh
+(cd "${relay_work:?Run the download command first}" &&
+  printf '%s  %s\n' '1f4b9832d9bd149be5e453c7ce5fe7886bac8267938a8dfabe0b8e1cfda2cf7e' 'neighbors-relay-v0.1.0-test.2.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz &&
+  cd neighbors-relay && sudo sh setup.sh)
+```
+
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. The checksum is pinned here rather than trusted only from a neighboring download; it is not a release signature.
+
+### Clone and build from source
+
+After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
+
+```sh
+git clone --branch v0.1.0-test.2 --single-branch \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
+```
+
+```sh
+(cd neighbors-relay-source && sudo sh setup.sh --mode source)
+```
+
+Source mode fetches pinned upstream sources and builds the relay instead of using a prebuilt relay binary. It needs at least 2.5 GiB RAM + swap and 6 GiB free on `/var/lib` and `/opt` (6 GiB total if shared). Native Ubuntu builds may have different hashes; use the canonical Docker build for byte-for-byte comparison.
+
+[Quickstart](docs/quickstart.md) · [Build / comparison](docs/deployment.md)
 
 ### Manual installation
 

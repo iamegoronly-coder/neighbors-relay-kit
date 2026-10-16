@@ -4,9 +4,11 @@
 
 Beide Wege verwenden dieselbe Konfiguration, Hilfsprogramme, systemd-Units und denselben Installer. Das Relay läuft als `nostr-relay`; die Installation braucht root. Lesen, Kompilieren und Vergleichen benötigen auf dem Host keine root-Rechte (Docker selbst hat privilegierten Zugriff). Kein Befehl leitet ein heruntergeladenes Skript direkt an eine Shell weiter.
 
-**Veröffentlichungsstatus:** lokaler Release-Kandidat, noch kein veröffentlichtes GitHub Release. Repository-URL, Release-Tag, Download-Links und unabhängig veröffentlichte Prüfsumme werden bei der Veröffentlichung ergänzt. Keine erfundenen Links oder `latest` verwenden. Der bestehende Test-VPS verwendet einen früheren nativen Build; dieser wurde nicht durch den kanonischen Build ersetzt und muss daher nicht denselben Hash haben.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.2` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
-Auf einem neuen Server übernimmt der [Assistent](quickstart.de.md) Abhängigkeiten, Caddy, Domain und Dienste. Hier folgen die manuelle Installation und der unabhängige Vergleich.
+**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.2 enthält die verbesserte Speicherplatzdiagnose und bestand lokale Tests, wurde aber noch nicht auf einem frischen VPS installiert. Die App-Einstellung für eigene Relays ist noch geplant; das Relay hat kein AUTH, jeder mit Kenntnis der Adresse kann sich verbinden.
+
+[Schnellstart](quickstart.de.md)
 
 ## Manuelle Vorbereitung
 
