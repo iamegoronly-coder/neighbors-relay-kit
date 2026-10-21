@@ -22,7 +22,32 @@ Canonical binary SHA-256 (unchanged):
 
 ## Local validation
 
-VALIDATION_PLACEHOLDER
+Source tag `v0.1.0-test.5` points to `2e567c7`; all 85 packaged repository files match that tag
+byte for byte, and all payload hashes match the manifest. Everything below ran on the
+preparation Mac from the extracted archive, without a VPS, without network access inside the
+containers and without touching production relays or system trust.
+
+- `tests/run-unit-tests.sh`: 66 unit tests and shell syntax PASS, both in the checkout and from
+  the extracted archive (the new test keeps the prune default equal to the relay configuration).
+- `tests/test_integration.py` against the canonical binary in a disposable Ubuntu 24.04 amd64
+  container with the 26-hour configuration: PASS (event/frame boundaries, 200-event replay + EOSE,
+  expiration, indexed age cleanup, live delivery across full prunes, slots and slow readers).
+- `tests/test_auth_integration.py` in the same container: PASS (anonymous/foreign reads denied,
+  own inbox readable, bad URL/challenge/replay refused, AUTH not stored, writes public).
+- Acceptance boundary on a disposable relay with this configuration: events dated 25 h and
+  25 h 59 min ago accepted; 26 h 01 min and 27 h ago rejected with `created_at too early`.
+- `tests/test_install_container.sh` in fresh offline containers, normal and `--no-start`: PASS
+  (wrong hash refused before mutation, exact bytes/permissions, repeat install refused). Caddy,
+  systemd and health are explicit test doubles there.
+- Companion app TLS stand (`Scripts/run_neighbors_relay_tls.py`): real URLSession → Caddy 2.11.7
+  → this strfry with the wizard-generated 26-hour configuration in default and `--auth` modes:
+  PASS; NIP-11 advertised the new 26 h description.
+
+Archive SHA-256:
+`457b11c75de953abf053952d0c299ee32896cd746119882c1925433916436fb4`.
+
+No existing archive or tag was replaced. All six main-branch README/quickstart commands pin
+this hash; immutable bundled instructions use the release-notes placeholder by design.
 
 ## Gates before users/public publication
 
