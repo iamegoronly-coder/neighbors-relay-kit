@@ -7,7 +7,7 @@ Deployment kit for a public [Nostr](https://github.com/nostr-protocol/nips) rela
 Caddy, with a short retention window, hard resource limits and post-quantum TLS. The website
 served by our own hosts is not included. The 2026-10-21 update reduces event size to 60 KiB and removes the redundant full-database
 maintenance scan; both built-in relays already use these fixes. The new test candidate is
-`v0.1.0-test.3`. Earlier test tags/archives are retained unchanged. A fresh clean-VPS
+`v0.1.0-test.4`. Earlier test tags/archives are retained unchanged. A fresh clean-VPS
 installation of this candidate is pending; the former test VPS has been deleted.
 
 First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Debian and automatic installation alongside an existing Caddy are separate follow-up stages; use the manual deployment guide for an existing server.
@@ -19,7 +19,7 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 
 [Relay/client boundary audit and validation (2026-10-21)](docs/relay-client-audit-2026-10-21.md).
 
-[Test.3 validation and deferred clean-VPS check](docs/test-release-2026-10-21.md).
+[Test.3 validation and deferred clean-VPS check](docs/test-release-test4-2026-10-21.md).
 
 ## What the relay sees — and what it does not
 
@@ -53,10 +53,8 @@ recorded: Caddy error/runtime logs, host/provider logs and operator changes are 
 
 ### Authentication
 
-NIP-42 AUTH remains **off by default** and is unchanged on both built-in relays. The current
-source tree adds `setup.sh --auth` for a fresh custom-relay installation; **the existing test.3
-archive does not contain this option**. Wait for a compatible client release and a newly packaged,
-validated kit before enabling it for users. The app now has internal custom-relay/NIP-42 support;
+NIP-42 AUTH remains **off by default** and is unchanged on both built-in relays. Test.4 includes `setup.sh --auth` for a fresh custom-relay installation.
+Wait for a compatible client release and clean-VPS validation before enabling it for users. The app now has internal custom-relay/NIP-42 support;
 the user-facing relay selector has not shipped.
 
 With `--auth`, the wizard sets `enabled = true`, `serviceUrl = "wss://<domain>/relay"`,
@@ -79,6 +77,8 @@ or without AUTH.** The app enforces this boundary; the future relay setting must
 Bluetooth and ordinary Bluetooth mesh remain available. No gateway delegation is implemented.
 See [the AUTH validation record](docs/custom-relay-auth-2026-10-21.md) and
 [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
+
+Before the selector can be released, the app also needs signed inbox-address exchange scoped to the selected network; the current custom mode suppresses legacy unscoped Bluetooth/group addresses. Internal delivery tests with known inboxes do not validate device discovery.
 
 ### Event kinds
 
@@ -151,7 +151,7 @@ Two clean local canonical builds matched byte-for-byte; see the
 
 ## Install
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.3` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.4` is a test release, not a production recommendation.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -168,27 +168,27 @@ When logged in as root, omit `sudo`.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.3.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.3/neighbors-relay-v0.1.0-test.3.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.4.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.4/neighbors-relay-v0.1.0-test.4.tar.gz
 ```
 
 2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' '81d19a2efcf7adae66ca127e041849b2f114196759a4f8b21fc06cbd52fcd0c0' 'neighbors-relay-v0.1.0-test.3.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.3.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_4_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.4.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.4.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_3_RELEASE_NOTES` with the archive SHA-256 from the test.3 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_4_RELEASE_NOTES` with the archive SHA-256 from the test.4 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
 
 ### Clone and build from source
 
 After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
-git clone --branch v0.1.0-test.3 --single-branch \
+git clone --branch v0.1.0-test.4 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 

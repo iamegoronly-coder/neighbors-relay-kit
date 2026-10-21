@@ -87,6 +87,12 @@ async def scenarios(uri, cli):
         tampered['sig'] = '00' * 64
         await reader.send(json.dumps(['AUTH', tampered]))
         assert (await receive(reader))[:3] == ['OK', tampered['id'], False]
+        # This pinned strfry compares the service host, not its path. Caddy's exact
+        # /relay route (and the client's HTTPS preflight) must catch path typos.
+        for service in [SERVICE + '/', SERVICE.replace('/relay', '/Relay')]:
+            async with connect(uri, **options) as path_reader:
+                _, path_challenge, _ = await query(path_reader, [{'kinds': [1059], '#p': [inbox]}])
+                assert (await proof(path_reader, owner, path_challenge, service))[0]
         accepted, auth_event = await proof(reader, owner, challenge)
         assert accepted
         values, _, closed = await query(reader, [{'kinds': [1059], '#p': [inbox]}])

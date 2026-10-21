@@ -2,7 +2,7 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Deutsch](README.de.md)
 
-Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in Home Bills. Es basiert auf unseren eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Unsere Website ist nicht enthalten. Das Update vom 21. Oktober 2026 senkt die Ereignisgrenze auf 60 KiB und entfernt den redundanten vollständigen Datenbankscan; beide eingebauten Relays verwenden diese Korrekturen bereits. Der neue Testkandidat heißt `v0.1.0-test.3`. Frühere Tags und Archive bleiben unverändert. Eine Neuinstallation dieses Kandidaten auf einem frischen VPS steht aus; der bisherige Test-VPS wurde gelöscht.
+Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in Home Bills. Es basiert auf unseren eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Unsere Website ist nicht enthalten. Das Update vom 21. Oktober 2026 senkt die Ereignisgrenze auf 60 KiB und entfernt den redundanten vollständigen Datenbankscan; beide eingebauten Relays verwenden diese Korrekturen bereits. Der neue Testkandidat heißt `v0.1.0-test.4`. Frühere Tags und Archive bleiben unverändert. Eine Neuinstallation dieses Kandidaten auf einem frischen VPS steht aus; der bisherige Test-VPS wurde gelöscht.
 
 Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-VPS**. ARM64, Debian und die automatische Installation neben vorhandenem Caddy folgen separat; für vorhandene Server gilt die manuelle Anleitung.
 
@@ -12,7 +12,7 @@ Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-V
 
 [Relay-/Client-Grenzen und Prüfergebnisse (2026-10-21, EN)](docs/relay-client-audit-2026-10-21.md).
 
-[Test.3-Prüfungen und ausstehende Neuinstallation auf einem VPS](docs/test-release-2026-10-21.md).
+[Test.3-Prüfungen und ausstehende Neuinstallation auf einem VPS](docs/test-release-test4-2026-10-21.md).
 
 ## Was das Relay sieht
 
@@ -40,9 +40,8 @@ Betreiberänderungen sind davon getrennt.
 ### Authentifizierung
 
 NIP-42 AUTH bleibt **standardmäßig ausgeschaltet**; beide eingebauten Relays bleiben unverändert.
-Der aktuelle Quellstand ergänzt `setup.sh --auth` für eine neue Installation eines eigenen Relays;
-**das bestehende test.3-Archiv enthält diese Option nicht**. Vor der Aktivierung für Nutzer sind eine
-kompatible App-Version und ein neu gepacktes, geprüftes Kit erforderlich. Interne Unterstützung für
+Test.4 enthält `setup.sh --auth` für eine neue Installation eines eigenen Relays. Vor der Aktivierung
+für Nutzer sind eine kompatible App-Version und eine Prüfung auf einem frischen VPS erforderlich. Interne Unterstützung für
 eigene Relays und NIP-42 ist in der App implementiert; die sichtbare Relay-Auswahl ist noch nicht veröffentlicht.
 
 Mit `--auth` setzt der Assistent vor dem Start von strfry `enabled = true`,
@@ -66,6 +65,8 @@ AUTH nicht verfügbar.** Der Code erzwingt diese Grenze; die spätere Relay-Eins
 hinweisen. Bluetooth und gewöhnliche Bluetooth-Mesh-Zustellung bleiben verfügbar. Eine Delegation
 an Gateways ist nicht implementiert. Siehe [AUTH-Prüfprotokoll](docs/custom-relay-auth-2026-10-21.md)
 und [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
+
+Vor Veröffentlichung der Relay-Auswahl benötigt die App einen signierten, an das gewählte Netz gebundenen Inbox-Adressaustausch. Eigene Netze unterdrücken derzeit ältere ungebundene Bluetooth-/Gruppenadressen. Interne Zustelltests mit bekannten Inboxen prüfen keine Erkennung auf Geräten.
 
 ### Ereignistypen
 
@@ -116,7 +117,7 @@ Siehe [beide Wege und Vergleich](docs/deployment.de.md). Es gibt noch kein öffe
 
 ## Installation
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.3` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.4` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
 Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
 
@@ -133,27 +134,27 @@ Bei Anmeldung als root kann `sudo` entfallen.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.3.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.3/neighbors-relay-v0.1.0-test.3.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.4.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.4/neighbors-relay-v0.1.0-test.4.tar.gz
 ```
 
 2. In derselben SSH-Sitzung die festgelegte Prüfsumme prüfen, dann entpacken und den Assistenten starten:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' '81d19a2efcf7adae66ca127e041849b2f114196759a4f8b21fc06cbd52fcd0c0' 'neighbors-relay-v0.1.0-test.3.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.3.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_4_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.4.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.4.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_3_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.3-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
+Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_4_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.4-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
 
 ### Klonen und aus Quellen bauen
 
 Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
 
 ```sh
-git clone --branch v0.1.0-test.3 --single-branch \
+git clone --branch v0.1.0-test.4 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 

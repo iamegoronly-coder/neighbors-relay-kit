@@ -1,9 +1,9 @@
 {
   "status": "private-test-candidate",
-  "version": "v0.1.0-test.3",
+  "version": "v0.1.0-test.4",
   "sha256": "be71c12620a1eee1fcc436b9ce0dfa0ce7cb69f2747a5cd00062b811b1c3a18d",
   "patch_sha256": "c6d67a1e8103bc538a70409ec92484636d3e3ddaec62f65b00022796d0634407",
   "caddy_version": "2.11.7",
   "prepared_at": "2026-10-21",
-  "clean_vps_validation": "pending: deferred by maintainer; previous test VPS deleted"
+  "clean_vps_validation": "pending: test.4 default and --auth installs; deferred by maintainer"
 }
