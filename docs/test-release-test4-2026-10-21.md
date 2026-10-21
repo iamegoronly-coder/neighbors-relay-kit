@@ -33,9 +33,21 @@ Canonical binary SHA-256:
   writes remain public. Same-host path variants pass because strfry compares host/port.
 - Companion app: 251 tests in 26 suites PASS (relay, routing, switching, lifecycle, resources).
 
-Archive extraction/install checks and the final archive checksum are recorded on main after
-packaging. Container installation uses explicit Caddy/systemd test doubles and cannot establish
-real TLS, systemd boot or physical-device acceptance.
+## Extracted archive validation
+
+Source tag `v0.1.0-test.4` points to `7e08fa9`; all 84 packaged repository files match that tag.
+All payload hashes match the manifest. The extracted archive passed the 65 unit tests and shell
+syntax, real strfry AUTH integration, and the default-mode integration (event/frame boundaries,
+200-event replay + EOSE, expiration, indexed age cleanup, live delivery, slots and slow readers).
+Fresh offline containers passed file installation and `--no-start`, exact bytes/permissions,
+wrong-hash rejection before mutation, and repeat-install refusal. Caddy/systemd/health in the
+file-install tests are explicit test doubles; this is not real systemd or TLS acceptance.
+
+Archive SHA-256:
+`9774069b863188a9cdbe599a33da2ae4029f75fba2a88a424b1a328a091499d8`.
+
+No existing archive or tag was replaced. All six main-branch README/quickstart commands pin
+this hash; immutable bundled instructions use the release-notes placeholder by design.
 
 ## Gates before users/public publication
 
