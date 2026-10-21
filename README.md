@@ -24,6 +24,14 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 
 [Test.4 validation and deferred clean-VPS check](docs/test-release-test4-2026-10-21.md).
 
+## Quick start
+
+1. A clean Ubuntu 24.04 x86_64 VPS, a domain with an A/AAAA record pointing at it, TCP 80 and 443 open, about 1 GiB RAM and 4 GiB free on `/var/lib`.
+2. The two commands under [Install](#install): download the pinned archive, verify its SHA-256, extract it and run `sudo sh setup.sh`. The wizard asks for language, domain and mode, shows a plan and, once confirmed, sets up Caddy, the relay and the timers.
+3. At the end the wizard prints `wss://your-domain/relay`; that is the address users enter in the app as their own relay. Verify at any time with `sudo sh setup.sh --check`.
+
+Details, the non-interactive mode and recovery: [docs/quickstart.md](docs/quickstart.md). While the repository is private the download commands answer 404; a local archive installs the same way, see the quickstart.
+
 ## What the relay sees — and what it does not
 
 The relay stores and forwards signed Nostr events. Message content is end-to-end encrypted by the
@@ -148,7 +156,7 @@ installer. For independent comparison, use the pinned canonical Docker build and
 result byte-for-byte with the release file. The native Ubuntu build remains available but is
 not guaranteed to produce the same hash with different compiler/library versions.
 
-See [both deployment paths and verification](docs/deployment.md). Private test Releases are available; no signing identity is configured. The local `setup.sh` wizard now prepares
+See [both deployment paths and verification](docs/deployment.md) and [how a test candidate is cut](docs/release-process.md); [CHANGELOG.md](CHANGELOG.md) lists the candidates. Private test Releases are available; no signing identity is configured. The local `setup.sh` wizard now prepares
 dependencies, Caddy, the domain, relay and timers on a clean VPS.
 The installer preserves the exact verified binary bytes.
 Two clean local canonical builds matched byte-for-byte; see the

@@ -16,6 +16,14 @@ Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-V
 
 [Test.4-Prüfungen und ausstehende Neuinstallation auf einem VPS (EN)](docs/test-release-test4-2026-10-21.md).
 
+## Schnellstart
+
+1. Frischer VPS mit Ubuntu 24.04 x86_64, eine Domain mit A/AAAA-Eintrag darauf, offene TCP-Ports 80 und 443, etwa 1 GiB RAM und 4 GiB frei unter `/var/lib`.
+2. Die zwei Befehle aus [Installation](#installation): das festgelegte Archiv laden, SHA-256 prüfen, entpacken und `sudo sh setup.sh` starten. Der Assistent fragt Sprache, Domain und Modus, zeigt einen Plan und richtet nach Bestätigung Caddy, Relay und Timer ein.
+3. Am Ende gibt der Assistent `wss://ihre-domain/relay` aus; diese Adresse wird in der App als eigenes Relay eingetragen. Prüfung jederzeit: `sudo sh setup.sh --check`.
+
+Details, nicht interaktiver Modus und Wiederherstellung: [docs/quickstart.de.md](docs/quickstart.de.md). Solange das Repository privat ist, antworten die Download-Befehle mit 404; ein lokales Archiv wird genauso installiert, siehe Quickstart.
+
 ## Was das Relay sieht
 
 Das Relay speichert und übermittelt signierte Nostr-Ereignisse. Die App verschlüsselt Nachrichten vor der Übertragung Ende zu Ende. Das Relay kann ihren Inhalt nicht lesen; `content` wird weder ausgewertet noch protokolliert.
