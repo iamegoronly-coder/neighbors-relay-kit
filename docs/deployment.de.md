@@ -4,9 +4,9 @@
 
 Beide Wege verwenden dieselbe Konfiguration, Hilfsprogramme, systemd-Units und denselben Installer. Das Relay läuft als `nostr-relay`; die Installation braucht root. Lesen, Kompilieren und Vergleichen benötigen auf dem Host keine root-Rechte (Docker selbst hat privilegierten Zugriff). Kein Befehl leitet ein heruntergeladenes Skript direkt an eine Shell weiter.
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.2` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.3` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
-**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.2 enthält die verbesserte Speicherplatzdiagnose und bestand lokale Tests, wurde aber noch nicht auf einem frischen VPS installiert. Die App-Einstellung für eigene Relays ist noch geplant; das Relay hat kein AUTH, jeder mit Kenntnis der Adresse kann sich verbinden.
+**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.3 ergänzt die Ereignisgrenze von 60 KiB, die ausschließlich altersindizierte Wartung und ein 180-Sekunden-Limit für den Policy-Smoke-Test. Die Neuinstallation von test.3 auf einem frischen VPS ist verschoben; der frühere Testserver wurde gelöscht. Lokale Containertests ersetzen keine echte systemd/TLS-Installation. Die App-Einstellung für eigene Relays ist noch geplant; das Relay hat kein AUTH, jeder mit Kenntnis der Adresse kann sich verbinden.
 
 [Schnellstart](quickstart.de.md)
 

@@ -7,9 +7,9 @@ The relay runs as `nostr-relay`; installation requires root. Reading, building a
 files does not require root inside the host OS (Docker itself has privileged access).
 No command pipes a downloaded script into a shell.
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.2` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.3` is a test release, not a production recommendation.
 
-**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.2 contains updated disk diagnostics and passed local tests, but has not yet been installed on a fresh VPS. The app setting for custom relays is still planned; this relay has no AUTH, so anyone who knows its address can connect.
+**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.3 adds the 60 KiB event cap, indexed-only maintenance and a 180-second smoke-policy timeout. A fresh VPS installation of test.3 is deferred; the old test VPS has been deleted. Local container tests do not replace a real systemd/TLS installation. The app setting for custom relays is still planned; this relay has no AUTH, so anyone who knows its address can connect.
 
 [Quickstart](quickstart.md)
 

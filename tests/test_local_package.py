@@ -48,6 +48,9 @@ class PackageTests(unittest.TestCase):
                          'README.de.md', 'SECURITY.de.md', 'SECURITY.ru.md', 'docs/caddy.de.md'):
                 self.assertIn('neighbors-relay/' + name, names)
             self.assertFalse(any('/out/' in name or name.endswith('/.env') for name in names))
+            for name in ("config/strfry.conf", "bin/strfry-prune-events", "tests/smoke_test.py", "release/local-candidate.json"):
+                self.assertEqual(archive.extractfile("neighbors-relay/" + name).read(),
+                                 (self.kit / name).read_bytes(), name)
         self.assertTrue(Path(str(self.output) + '.sha256').read_text().startswith(module.sha(self.output)))
 
     def test_corruption_and_missing_source_refused(self):

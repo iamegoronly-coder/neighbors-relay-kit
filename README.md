@@ -5,9 +5,10 @@
 Deployment kit for a public [Nostr](https://github.com/nostr-protocol/nips) relay used by
 **Neighbors**, the private chat in the Home Bills app. It is based on the app's built-in relays: [strfry](https://github.com/hoytech/strfry) behind
 Caddy, with a short retention window, hard resource limits and post-quantum TLS. The website
-served by our own hosts is not included. Kit defaults can advance independently of deployed
-servers: this checkout reduces event size to 60 KiB and removes the redundant full-database
-maintenance scan. Existing test release archives and running servers are unchanged.
+served by our own hosts is not included. The 2026-10-21 update reduces event size to 60 KiB and removes the redundant full-database
+maintenance scan; both built-in relays already use these fixes. The new test candidate is
+`v0.1.0-test.3`. Earlier test tags/archives are retained unchanged. A fresh clean-VPS
+installation of this candidate is pending; the former test VPS has been deleted.
 
 
 > **Status.** This kit deploys a relay; it does not change client settings automatically.
@@ -15,6 +16,8 @@ maintenance scan. Existing test release archives and running servers are unchang
 > The repository and test releases remain private; see the publication status below.
 
 [Relay/client boundary audit and validation (2026-10-21)](docs/relay-client-audit-2026-10-21.md).
+
+[Test.3 validation and deferred clean-VPS check](docs/test-release-2026-10-21.md).
 
 ## What the relay sees — and what it does not
 
@@ -129,7 +132,7 @@ Two clean local canonical builds matched byte-for-byte; see the
 
 ## Install
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.2` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.3` is a test release, not a production recommendation.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -146,27 +149,27 @@ When logged in as root, omit `sudo`.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.2.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.2/neighbors-relay-v0.1.0-test.2.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.3.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.3/neighbors-relay-v0.1.0-test.3.tar.gz
 ```
 
 2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' '1f4b9832d9bd149be5e453c7ce5fe7886bac8267938a8dfabe0b8e1cfda2cf7e' 'neighbors-relay-v0.1.0-test.2.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.2.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_3_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.3.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.3.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. The checksum is pinned here rather than trusted only from a neighboring download; it is not a release signature.
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_3_RELEASE_NOTES` with the archive SHA-256 from the test.3 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
 
 ### Clone and build from source
 
 After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
-git clone --branch v0.1.0-test.2 --single-branch \
+git clone --branch v0.1.0-test.3 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 

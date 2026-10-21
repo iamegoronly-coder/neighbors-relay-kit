@@ -1,7 +1,9 @@
 # Relay/client boundary audit — 2026-10-21
 
 Scope: the private relay-kit checkout and the application's NeighborsRelay receive path.
-No live relay, existing release archive, visibility or application version was changed.
+The initial audit did not change live relays, archives, visibility or the app version.
+Subsequent rollout and candidate validation are recorded in
+[test.3 preparation](test-release-2026-10-21.md).
 
 ## Findings and changes
 
@@ -60,7 +62,7 @@ No live relay, existing release archive, visibility or application version was c
 This is not a full-database load measurement, a new VPS deployment, an AUTH-enabled client
 acceptance test or a physical iPhone/iPad/Watch test. Existing private test release archives
 still contain the previous scripts/configuration; publish a new version rather than silently
-replacing their pinned files/checksums. Running relays require a separate planned update.
+replacing their pinned files/checksums. Both running relays subsequently received the coordinated update; see the preparation record above.
 
 ## Pinned upstream references
 

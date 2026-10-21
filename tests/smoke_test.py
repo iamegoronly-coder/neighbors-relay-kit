@@ -265,9 +265,10 @@ async def policy():
             assert (await publish(publisher, present))[2] is True
             assert len(await query(reader, [{"ids": [present["id"]]}])) == 1
             started = time.monotonic()
-            while await query(reader, [{"ids": [present["id"]]}]):
-                assert time.monotonic() - started < 300, "ephemeral buffer exceeded 5 minutes"
-                await asyncio.sleep(20)
+            # Bound the whole wait, including a slow query, not just polling intervals.
+            async with asyncio.timeout(180):
+                while await query(reader, [{"ids": [present["id"]]}]):
+                    await asyncio.sleep(5)
     print(json.dumps({
         "status": "PASS",
         "future_normal_accepted": True,
