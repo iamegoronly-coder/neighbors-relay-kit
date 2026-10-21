@@ -78,9 +78,9 @@ Vor Veröffentlichung der Relay-Auswahl benötigt die App einen signierten, an d
 
 ## Richtlinien und Grenzen
 
-- **Verlauf:** normale Ereignisse werden angenommen, wenn `created_at` höchstens 48 Stunden alt und höchstens 20 Minuten in der Zukunft liegt. Bereitstellung und Aufbewahrung bis `created_at + 48 h`, Bereinigung alle 2 Minuten.
+- **Verlauf:** normale Ereignisse werden angenommen, wenn `created_at` höchstens 26 Stunden alt und höchstens 20 Minuten in der Zukunft liegt. Bereitstellung und Aufbewahrung bis `created_at + 26 h`, Bereinigung alle 2 Minuten. Die App fragt Umschläge aus etwa den letzten 24 Stunden ab; 26 Stunden sind Spielraum, kein Zustellversprechen: ein länger als einen Tag ausgeschaltetes Gerät verpasst Nachrichten auf jedem Relay.
 - **Kurzlebige Kinds 20000–29999:** Annahme innerhalb ±60 Sekunden zur Relay-Uhr; 90 Sekunden ab `created_at`, interner Ablaufindex-Cron etwa alle 9 Sekunden (normalerweise 90–99 Sekunden bei aktueller Datierung, mit erlaubtem Zeitvorlauf von 60 Sekunden bis etwa 160 Sekunden ab Empfang; unter Last oder bei Stillstand länger), kein Offline-Postfach.
-- **NIP-40 `expiration`:** bereits abgelaufene Ereignisse werden abgelehnt, beim Lesen herausgefiltert (gepatchtes strfry) und durch den internen Ablaufindex-Cron entfernt. Der externe 2-Minuten-Job führt nur `delete --age 172800` aus; sein Erfolgsstempel überwacht die Altersbereinigung, nicht den internen Cron.
+- **NIP-40 `expiration`:** bereits abgelaufene Ereignisse werden abgelehnt, beim Lesen herausgefiltert (gepatchtes strfry) und durch den internen Ablaufindex-Cron entfernt. Der externe 2-Minuten-Job führt nur `delete --age 93600` aus; sein Erfolgsstempel überwacht die Altersbereinigung, nicht den internen Cron.
 - **NIP-42 AUTH standardmäßig aus.** Im aktuellen Quellstand optional eingeschränktes Lesen auf eigenen Relays; siehe Authentifizierung. Schreiben und Ressourcenlimits bleiben unverändert.
 
 | Grenze | Mechanismus |

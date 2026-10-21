@@ -1,5 +1,5 @@
 [Unit]
-Description=Prune Nostr relay events older than 48 hours
+Description=Prune Nostr relay events older than 26 hours
 After=strfry.service
 
 [Service]

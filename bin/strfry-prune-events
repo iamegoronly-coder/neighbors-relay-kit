@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Prune the 48-hour history with strfry's indexed age deletion.
+"""Prune the 26-hour history with strfry's indexed age deletion.
+
+The default age must equal events.rejectEventsOlderThanSeconds in config/strfry.conf
+(tests/test_prune.py enforces this).
 
 Pinned strfry's RelayCron handles ephemeral/NIP-40 expiry every nine seconds
 using the expiration index. The required neighbors patch also lets that cron
@@ -16,7 +19,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--binary", default="/usr/local/bin/strfry")
     parser.add_argument("--config", default="/etc/strfry/strfry.conf")
-    parser.add_argument("--age-seconds", type=int, default=172800)
+    parser.add_argument("--age-seconds", type=int, default=93600)
     args = parser.parse_args()
     if args.age_seconds <= 0:
         parser.error("--age-seconds must be positive")

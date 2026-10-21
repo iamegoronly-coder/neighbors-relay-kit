@@ -2,7 +2,7 @@
 """External WSS/NIP-01 acceptance test against a deployed relay.
 
 Uses disposable keys and synthetic events whose content starts with "relay-smoke-".
-They expire with the relay's 48-hour history; remove them sooner on the server with
+They expire with the relay's 26-hour history; remove them sooner on the server with
 scripts/cleanup-smoke-events with the manifest from this run (dry run first).
 The manifest records attempted IDs before transmission, even if an ACK is lost.
 

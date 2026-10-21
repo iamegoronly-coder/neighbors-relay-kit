@@ -90,13 +90,15 @@ Before the selector can be released, the app also needs signed inbox-address exc
 
 ## Policy and limits
 
-- **History:** normal events are accepted if `created_at` is at most 48 h old and at most 20 min in
-  the future; they are served and kept until `created_at + 48 h`, then pruned every 2 minutes.
+- **History:** normal events are accepted if `created_at` is at most 26 h old and at most 20 min in
+  the future; they are served and kept until `created_at + 26 h`, then pruned every 2 minutes.
+  The app requests envelopes from roughly the last 24 h, so 26 h is headroom, not a delivery
+  promise; a device offline for longer than a day misses messages on any relay.
 - **Ephemeral kinds 20000–29999:** accepted within ±60 s of the relay clock, kept on disk for a
   90 s buffer from `created_at`; internal indexed cleanup runs about every 9 s (normally 90–99 s from an event dated now; up to about 160 s after receipt with the allowed +60 s clock skew, longer under load or downtime), never an offline mailbox.
 - **NIP-40 `expiration`:** already-expired events are rejected; expired events are filtered at read
   time (patched strfry) and physically removed by the internal expiration-index cron.
-  The external 2-minute job only runs `delete --age 172800`; its success stamp monitors age maintenance, not the internal cron.
+  The external 2-minute job only runs `delete --age 93600`; its success stamp monitors age maintenance, not the internal cron.
 - **NIP-42 AUTH off by default.** Optional restricted reads for custom relays in the current source tree; see Authentication above. Writes and resource limits remain unchanged.
 
 | Limit | Mechanism |
