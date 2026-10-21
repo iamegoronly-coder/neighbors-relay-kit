@@ -2,8 +2,9 @@
 """strfry writePolicy: bound future timestamps of ephemeral kinds only.
 
 Normal envelopes retain the configured 20-minute skew tolerance. For
-ephemeral kinds, 60s future tolerance plus 90s lifetime and a 2-minute
-maintenance interval keeps the technical disk buffer under about 5 minutes.
+ephemeral kinds, 90s lifetime from created_at plus the approximately 9s internal cron gives
+about 90-99s at current timestamps, or up to about 160s from receipt with
+the allowed 60s future skew. Scheduling/load can delay physical deletion.
 No IP, event body, key, or tag is logged or stored by this plugin.
 """
 

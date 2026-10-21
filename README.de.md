@@ -2,9 +2,13 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Deutsch](README.de.md)
 
-Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in der App Home Bills. Es entspricht den eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Die Hosts unserer eingebauten Relays stellen zusätzlich unsere Website bereit. Diese Website ist die einzige zusätzliche Komponente gegenüber diesem Kit; Relay-Software, Nachrichtenverarbeitung, Aufbewahrung und Ressourcengrenzen sind gleich. Die Website gehört nicht zu diesem Paket.
+Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in Home Bills. Es basiert auf unseren eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Unsere Website ist nicht enthalten. Kit-Vorgaben können sich unabhängig von laufenden Servern ändern: Dieser Checkout senkt die Ereignisgrenze auf 60 KiB und entfernt den redundanten vollständigen Datenbankscan. Bestehende Testarchive und laufende Server bleiben unverändert.
 
-> **Status.** Die veröffentlichte App verbindet sich mit ihren zwei eingebauten Relays. Eine Einstellung für ein eigenes Relay folgt später. Bis dahin dokumentiert dieses Kit die Konfiguration, Speicherung und Sichtbarkeit der eingebauten Relays und ermöglicht den Betrieb eines identischen Relays.
+> **Status.** Das Kit stellt ein Relay bereit und ändert keine Client-Einstellungen automatisch.
+> Ein eigenes Relay setzt eine App-Version mit entsprechender Routing-Unterstützung voraus.
+> Repository und Test-Releases bleiben privat; Veröffentlichungsstatus siehe unten.
+
+[Relay-/Client-Grenzen und Prüfergebnisse (2026-10-21, EN)](docs/relay-client-audit-2026-10-21.md).
 
 ## Was das Relay sieht
 
@@ -20,6 +24,27 @@ Das Relay kann Ereignisse mit Verbindung, Quell-IP, Zeitpunkt und Empfänger-Tag
 
 `OK` bedeutet „zur Speicherung angenommen“, nicht „zugestellt“. Löschen aus LMDB garantiert keine physische Löschung der Bytes; Hosting-Anbieter können Datenträger-Snapshots aufbewahren. Keine garantierte Löschung versprechen.
 
+### IP-Adressen in dieser Konfiguration
+
+Caddy nimmt Client-Verbindungen an und sieht deren IP-Adressen. strfry hört auf Loopback und
+behandelt mit `realIpHeader = ""` nur Caddy (`127.0.0.1`) als Gegenstelle; weitergeleitete Client-IP-
+Header werden ignoriert. Das Beispiel-Caddyfile aktiviert kein HTTP-Zugriffslog, strfry läuft auf
+WARNING ohne Ereignis-Dumps. Das reduziert die reguläre Protokollierung, garantiert aber **nicht**,
+dass IPs nirgends gespeichert werden: Caddy-Fehler-/Laufzeitlogs, Host-/Providerlogs und spätere
+Betreiberänderungen sind davon getrennt.
+
+### Authentifizierung
+
+NIP-42 AUTH ist absichtlich deaktiviert: Neighbors beantwortet AUTH-Challenges noch nicht, auch
+nicht beim Lesen delegierter Gateway-Postfächer. Jeder kann daher Chiffretext und sichtbare Tags
+abfragen sowie korrekt signierte Ereignisse an fremde `#p` senden; die App prüft Nachrichten
+weiterhin Ende zu Ende vor der Annahme. AUTH mit `restrictedReadKinds = "4, 1059"` und
+`restrictReadToInvolvedPubkey = true` würde das Lesen dieser Kinds auf authentifizierte beteiligte
+Schlüssel begrenzen (Empfänger im `p`-Tag oder äußerer Ereignisautor). Das erschwert massenhaftes
+Sammeln, verhindert aber weder unerwünschtes Schreiben noch die Sichtbarkeit beim Betreiber.
+Nicht einfach für aktuelle Clients einschalten: Challenge-Signaturen, Relay-URL-Prüfung und
+Gateway-Delegation müssen zuerst gemeinsam unterstützt werden.
+
 ### Ereignistypen
 
 | Kind | Verwendung in Neighbors |
@@ -31,8 +56,8 @@ Das Relay kann Ereignisse mit Verbindung, Quell-IP, Zeitpunkt und Empfänger-Tag
 ## Richtlinien und Grenzen
 
 - **Verlauf:** normale Ereignisse werden angenommen, wenn `created_at` höchstens 48 Stunden alt und höchstens 20 Minuten in der Zukunft liegt. Bereitstellung und Aufbewahrung bis `created_at + 48 h`, Bereinigung alle 2 Minuten.
-- **Kurzlebige Kinds 20000–29999:** Annahme innerhalb ±60 Sekunden zur Relay-Uhr; technischer Datenträgerpuffer von 90 Sekunden (praktisch unter etwa 5 Minuten), kein Offline-Postfach.
-- **NIP-40 `expiration`:** bereits abgelaufene Ereignisse werden abgelehnt, beim Lesen herausgefiltert (gepatchtes strfry) und beim nächsten Prune entfernt.
+- **Kurzlebige Kinds 20000–29999:** Annahme innerhalb ±60 Sekunden zur Relay-Uhr; 90 Sekunden ab `created_at`, interner Ablaufindex-Cron etwa alle 9 Sekunden (normalerweise 90–99 Sekunden bei aktueller Datierung, mit erlaubtem Zeitvorlauf von 60 Sekunden bis etwa 160 Sekunden ab Empfang; unter Last oder bei Stillstand länger), kein Offline-Postfach.
+- **NIP-40 `expiration`:** bereits abgelaufene Ereignisse werden abgelehnt, beim Lesen herausgefiltert (gepatchtes strfry) und durch den internen Ablaufindex-Cron entfernt. Der externe 2-Minuten-Job führt nur `delete --age 172800` aus; sein Erfolgsstempel überwacht die Altersbereinigung, nicht den internen Cron.
 - **Kein NIP-42 AUTH.** Öffentliches Relay; Missbrauch wird durch Ressourcenlimits begrenzt.
 
 | Grenze | Mechanismus |
@@ -40,7 +65,7 @@ Das Relay kann Ereignisse mit Verbindung, Quell-IP, Zeitpunkt und Empfänger-Tag
 | 1 vCPU, 512 MiB RAM, 64 Tasks, 256 Dateideskriptoren | systemd `CPUQuota`, `MemoryMax`, `TasksMax`, `LimitNOFILE` |
 | 100 WebSocket-Verbindungen | `relay.maxConnections` (exakt, gepatcht) und Caddy `unhealthy_request_count` (frühe 503) |
 | Datenbank < 1,5 GiB und > 2 GiB frei auf ihrem Dateisystem | `strfry-disk-guard` vor Start und minütlich; stoppt nur das Relay |
-| Ereignis ≤ 64 KiB, WebSocket-Nachricht ≤ 128 KiB | `events.maxEventSize`, `relay.maxWebsocketPayloadSize` |
+| Ereignis ≤ 60 KiB (61.440 Bytes), WebSocket-Nachricht ≤ 128 KiB | `events.maxEventSize`, `relay.maxWebsocketPayloadSize` |
 | 20 Abonnements pro Verbindung, 500 Ereignisse pro Filter, 1 MiB Ausgabepuffer | `strfry.conf` |
 | Relay-Log ≤ 50 MiB / 7 Tage, flüchtig | Namensraum `journald@strfry.conf`; keine Ereignisinhalte, Schlüssel oder Tags |
 

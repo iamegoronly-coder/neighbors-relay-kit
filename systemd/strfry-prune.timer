@@ -1,5 +1,5 @@
 [Unit]
-Description=Prune Nostr relay history and expired events every two minutes
+Description=Prune Nostr relay 48-hour history every two minutes
 
 [Timer]
 OnBootSec=1min

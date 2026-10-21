@@ -3,16 +3,18 @@
 [English](README.md) · [Русский](README.ru.md) · [Deutsch](README.de.md)
 
 Deployment kit for a public [Nostr](https://github.com/nostr-protocol/nips) relay used by
-**Neighbors**, the private chat in the Home Bills app. It is the same setup that runs the app's
-built-in relays: [strfry](https://github.com/hoytech/strfry) behind Caddy, with a short
-retention window, hard resource limits and post-quantum TLS. Our built-in relay hosts also serve
-our website. That website is the only extra component compared with this kit: the relay software,
-message handling, retention policy and resource limits are the same. The website is not included here.
+**Neighbors**, the private chat in the Home Bills app. It is based on the app's built-in relays: [strfry](https://github.com/hoytech/strfry) behind
+Caddy, with a short retention window, hard resource limits and post-quantum TLS. The website
+served by our own hosts is not included. Kit defaults can advance independently of deployed
+servers: this checkout reduces event size to 60 KiB and removes the redundant full-database
+maintenance scan. Existing test release archives and running servers are unchanged.
 
 
-> **Status.** The released app connects to its two built-in relays. A user setting for connecting your own
-> relay instead of them is planned. Until then this kit documents exactly how the built-in relays
-> are configured, what they keep and what they can see, and lets anyone run an identical one.
+> **Status.** This kit deploys a relay; it does not change client settings automatically.
+> Connecting to a custom relay requires an app build that supports custom-relay routing.
+> The repository and test releases remain private; see the publication status below.
+
+[Relay/client boundary audit and validation (2026-10-21)](docs/relay-client-audit-2026-10-21.md).
 
 ## What the relay sees — and what it does not
 
@@ -36,6 +38,26 @@ including plaintext and public application records; it does not encrypt those fo
 does not guarantee the bytes are physically erased, and a hosting provider may keep disk snapshots.
 Do not promise users guaranteed erasure.
 
+### IP handling in this configuration
+
+Caddy terminates client connections and therefore sees their IP addresses. With strfry bound to
+loopback and `realIpHeader = ""`, strfry treats Caddy (`127.0.0.1`) as its peer, ignoring forwarded
+client-IP headers. The example Caddyfile does not enable HTTP access logs; strfry runs at WARNING
+without event dumps. This reduces routine logging; it is **not** a promise that IPs are never
+recorded: Caddy error/runtime logs, host/provider logs and operator changes are separate.
+
+### Authentication
+
+NIP-42 AUTH is deliberately disabled because Neighbors does not yet answer AUTH challenges,
+including on connections reading delegated gateway inboxes. Today anyone can query ciphertext
+and visible tags, and can submit correctly signed events addressed to someone else's `#p`;
+end-to-end validation still determines which messages the app accepts. AUTH plus
+`restrictedReadKinds = "4, 1059"` and `restrictReadToInvolvedPubkey = true` would restrict reading
+those kinds to an authenticated involved key (the recipient's `p` key or the event's outer author
+key), reducing bulk collection. This does not encrypt metadata, block unsolicited writes or hide
+traffic from the operator. Do not simply enable it for current clients: client signing, service-URL
+validation and gateway delegation need coordinated support first.
+
 ### Event kinds
 
 | Kind | Used by Neighbors for |
@@ -49,9 +71,10 @@ Do not promise users guaranteed erasure.
 - **History:** normal events are accepted if `created_at` is at most 48 h old and at most 20 min in
   the future; they are served and kept until `created_at + 48 h`, then pruned every 2 minutes.
 - **Ephemeral kinds 20000–29999:** accepted within ±60 s of the relay clock, kept on disk for a
-  90 s technical buffer (in practice under ~5 minutes), never an offline mailbox.
+  90 s buffer from `created_at`; internal indexed cleanup runs about every 9 s (normally 90–99 s from an event dated now; up to about 160 s after receipt with the allowed +60 s clock skew, longer under load or downtime), never an offline mailbox.
 - **NIP-40 `expiration`:** already-expired events are rejected; expired events are filtered at read
-  time (patched strfry) and physically removed by the next prune.
+  time (patched strfry) and physically removed by the internal expiration-index cron.
+  The external 2-minute job only runs `delete --age 172800`; its success stamp monitors age maintenance, not the internal cron.
 - **No NIP-42 AUTH.** The relay is public; abuse limits are resource limits.
 
 | Limit | Mechanism |
@@ -59,7 +82,7 @@ Do not promise users guaranteed erasure.
 | 1 vCPU, 512 MiB RAM, 64 tasks, 256 file descriptors | systemd `CPUQuota`, `MemoryMax`, `TasksMax`, `LimitNOFILE` |
 | 100 WebSocket connections | `relay.maxConnections` (exact, patched) and Caddy `unhealthy_request_count` (early 503) |
 | Database < 1.5 GiB and > 2 GiB free on its filesystem | `strfry-disk-guard` before start and every minute; stops only the relay |
-| Event ≤ 64 KiB, WebSocket message ≤ 128 KiB | `events.maxEventSize`, `relay.maxWebsocketPayloadSize` |
+| Event ≤ 60 KiB (61,440 bytes), WebSocket message ≤ 128 KiB | `events.maxEventSize`, `relay.maxWebsocketPayloadSize` |
 | 20 subscriptions per connection, 500 events per filter, 1 MiB outbound buffer | `strfry.conf` |
 | Relay log ≤ 50 MiB / 7 days, volatile | `journald@strfry.conf` namespace; no event bodies, keys or tags are logged |
 

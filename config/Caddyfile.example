@@ -6,6 +6,8 @@
     }
 }
 
+# No HTTP access-log directive. Caddy still sees client IPs; runtime/error logs
+# and host/provider logging are separate. Do not promise that IPs are never recorded.
 relay.example.org {
     header {
         X-Content-Type-Options nosniff

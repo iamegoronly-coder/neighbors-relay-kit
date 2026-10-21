@@ -37,7 +37,7 @@ async def message(ws):
 async def publish(ws, ev):
     await ws.send(json.dumps(["EVENT", ev]))
     response = await message(ws)
-    assert response[:3] == ["OK", ev["id"], True], response[:3]
+    assert response[:3] == ["OK", ev["id"], True], response
 
 
 async def query(ws, filt):
@@ -76,6 +76,65 @@ async def scenarios(uri, cli, capacity, through_caddy):
                     assert page.status == 200 and page.read() == b"site-ok"
         assert await query(reader, {"ids": ["00" * 32]}) == []
         print(f"PASS limit={capacity}; excess refused; accepted peers survive; caddy={through_caddy}", flush=True)
+
+        # maxEventSize applies to normalised event JSON, not its NIP-01 wrapper.
+        def sized_event(size):
+            value = event(kind=1059, tags=[["p", "ab" * 32]], content="")
+            overhead = len(json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode())
+            value = event(kind=1059, tags=[["p", "ab" * 32]], content="x" * (size - overhead))
+            assert len(json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode()) == size
+            return value
+
+        boundary = sized_event(61440)
+        await publish(pub, boundary)
+        await reader.send(json.dumps(["REQ", "inbox", {"ids": [boundary["id"]], "limit": 200}]))
+        wire = await asyncio.wait_for(reader.recv(), 4)
+        assert 61440 < len(wire.encode()) <= 65536
+        assert json.loads(wire)[2]["id"] == boundary["id"]
+        assert await message(reader) == ["EOSE", "inbox"]
+        await reader.send(json.dumps(["CLOSE", "inbox"]))
+        for size in (61441, 65519, 65536):
+            oversized = sized_event(size)
+            await pub.send(json.dumps(["EVENT", oversized]))
+            refused = await message(pub)
+            assert refused[:3] == ["OK", oversized["id"], False], refused[:3]
+        after = event()
+        await publish(pub, after)
+        assert await query(reader, {"ids": [after["id"]]}) == [after["id"]]
+        print("PASS 61440-byte event + wrapper readable; 61441/65519/65536 refused; socket remains usable", flush=True)
+
+        # A legitimate inbox page includes EOSE after its 200 EVENT messages.
+        marker = secrets.token_hex(32)
+        stored = []
+        for _ in range(200):
+            value = event(kind=1059, tags=[["p", marker]])
+            stored.append(value["id"])
+            await publish(pub, value)
+        assert set(await query(reader, {"#p": [marker], "limit": 200})) == set(stored)
+        print("PASS 200-event backfill followed by EOSE on one connection", flush=True)
+
+        # Physical expiration is done by strfry's indexed cron, without our age helper.
+        # Keep an independent live subscription open while the newest record expires.
+        await reader.send(json.dumps(["REQ", "cron-live", {"kinds": [1402]}]))
+        assert await message(reader) == ["EOSE", "cron-live"]
+        for kind in (20001, 1):
+            expires = int(time.time()) + 3
+            value = (event(kind=kind, created_at=int(time.time()) - 88) if kind == 20001
+                     else event(tags=[["expiration", str(expires)]]))
+            await publish(pub, value)
+            scan = cli + ["scan", json.dumps({"ids": [value["id"]]})]
+            assert subprocess.check_output(scan).strip()  # Really on disk before expiry.
+            deadline = time.monotonic() + 16
+            while subprocess.check_output(scan).strip():
+                assert time.monotonic() < deadline, "internal expiry cron failed to remove newest event"
+                await asyncio.sleep(.25)
+            following = event(kind=1402)
+            await publish(pub, following)
+            received = await message(reader)
+            assert received[2]["id"] == following["id"]
+        await reader.send(json.dumps(["CLOSE", "cron-live"]))
+        assert await query(reader, {"ids": [boundary["id"]]}) == [boundary["id"]]
+        print("PASS internal ephemeral/NIP-40 deletion without full scan; live delivery and retained event survive", flush=True)
 
         live = event(created_at=int(time.time()) - 10)
         deadline = int(time.time()) + 3
@@ -159,24 +218,18 @@ def main():
             reserve.bind(("127.0.0.1", 0))
             port = reserve.getsockname()[1]
         config = root / "strfry.conf"
-        config.write_text(f'''db = "{root / 'db'}"
-dbParams {{ mapsize = 67108864 }}
-events {{ rejectEventsNewerThanSeconds = 1200 }}
-relay {{
-    bind = "127.0.0.1"
-    port = {port}
-    nofiles = 0
-    maxConnections = {args.capacity}
-    auth {{
-        enabled = false
-        restrictedReadKinds = ""
-        restrictReadToInvolvedPubkey = false
-    }}
-    negentropy {{ enabled = false }}
-    compression {{ enabled = false }}
-    maxPendingOutboundBytes = 1048576
-}}
-''')
+        kit = Path(__file__).resolve().parent.parent
+        template = (kit / "config/strfry.conf").read_text()
+        template = template.replace('db = "/var/lib/strfry/db"', f'db = "{root / "db"}"')
+        template = template.replace("port = 7777", f"port = {port}")
+        template = template.replace("nofiles = 256", "nofiles = 0")
+        template = template.replace("maxConnections = 100", f"maxConnections = {args.capacity}")
+        template = template.replace("mapsize = 2147483648", "mapsize = 67108864")
+        # Only a test timestamp tolerance is widened to exercise imminent 90s expiry quickly.
+        template = template.replace("rejectEphemeralEventsOlderThanSeconds = 60", "rejectEphemeralEventsOlderThanSeconds = 120")
+        template = template.replace("/usr/local/libexec/strfry-ephemeral-policy", str(kit / "bin/strfry-ephemeral-policy"))
+        config.write_text(template)
+
         cli = [args.binary, "--config", str(config), "--verbosity=WARNING"]
         with (root / "relay.log").open("w+") as log:
             relay = subprocess.Popen(cli + ["relay"], stdout=log, stderr=log)

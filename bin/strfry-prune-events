@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
-"""Prune 48h history, ephemeral and NIP-40 events using strfry's own CLI.
+"""Prune the 48-hour history with strfry's indexed age deletion.
 
-The deployed strfry-neighbors.patch keeps a monotonic LMDB event watermark,
-so pruning the newest record is safe for live subscribers. The relay filters
-expired events at read time; this pass handles physical deletion every 2min.
+Pinned strfry's RelayCron handles ephemeral/NIP-40 expiry every nine seconds
+using the expiration index. The required neighbors patch also lets that cron
+remove the newest record safely. Do not scan/deserialize the whole DB here.
+The systemd ExecStartPost writes last-prune only after this command succeeds;
+that stamp proves age maintenance, not the health of the internal expiry cron.
 """
 
 import argparse
-import json
 import subprocess
-import sys
-import time
-
-
-def delete_ids(base_command: list[str], event_ids: list[str]) -> None:
-    if not event_ids:
-        return
-    subprocess.run(
-        base_command + ["delete", "--filter", json.dumps({"ids": event_ids})],
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
 
 
 def main() -> int:
@@ -29,64 +18,15 @@ def main() -> int:
     parser.add_argument("--config", default="/etc/strfry/strfry.conf")
     parser.add_argument("--age-seconds", type=int, default=172800)
     args = parser.parse_args()
-    command = [args.binary, "--config", args.config, "--verbosity=WARNING"]
-
+    if args.age_seconds <= 0:
+        parser.error("--age-seconds must be positive")
     subprocess.run(
-        command + ["delete", "--age", str(args.age_seconds)],
+        [args.binary, "--config", args.config, "--verbosity=WARNING",
+         "delete", "--age", str(args.age_seconds)],
         check=True,
         stdout=subprocess.DEVNULL,
     )
-
-    now = int(time.time())
-    pending: list[str] = []
-    deleted = 0
-    scan = subprocess.Popen(
-        command + ["scan", "{}"],
-        stdout=subprocess.PIPE,
-        text=True,
-        encoding="utf-8",
-    )
-    assert scan.stdout is not None
-    try:
-        for line in scan.stdout:
-            event = json.loads(line)
-            if event["created_at"] + args.age_seconds <= now:
-                pending.append(event["id"])
-                if len(pending) >= 128:
-                    delete_ids(command, pending)
-                    deleted += len(pending)
-                    pending.clear()
-                continue
-            if 20000 <= event["kind"] < 30000:
-                if event["created_at"] + 90 <= now:
-                    pending.append(event["id"])
-                if len(pending) >= 128:
-                    delete_ids(command, pending)
-                    deleted += len(pending)
-                    pending.clear()
-                continue
-            for tag in event.get("tags", []):
-                if len(tag) < 2 or tag[0] != "expiration":
-                    continue
-                try:
-                    expiration = int(tag[1])
-                except (TypeError, ValueError):
-                    continue
-                if expiration <= now:
-                    pending.append(event["id"])
-                break
-            if len(pending) >= 128:
-                delete_ids(command, pending)
-                deleted += len(pending)
-                pending.clear()
-    finally:
-        scan.stdout.close()
-    if scan.wait() != 0:
-        print("strfry-prune-events: scan failed", file=sys.stderr)
-        return 1
-    delete_ids(command, pending)
-    deleted += len(pending)
-    print(f"strfry-prune-events: removed {deleted} expired history/NIP-40/ephemeral events")
+    print("strfry-prune-events: age maintenance completed")
     return 0
 
 

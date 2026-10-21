@@ -1,55 +1,50 @@
 #!/usr/bin/env python3
-"""Isolated expiry regression test; does not touch the production database."""
-
+"""Age maintenance must not start a full scan or report success after failure."""
 import importlib.machinery
 import importlib.util
-import io
-import json
+import subprocess
+import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-
-class FakeScan:
-    def __init__(self, events):
-        self.stdout = io.StringIO("".join(json.dumps(event) + "\n" for event in events))
-
-    def wait(self):
-        return 0
+path = Path(__file__).resolve().parent.parent / "bin" / "strfry-prune-events"
+loader = importlib.machinery.SourceFileLoader("strfry_prune_events", str(path))
+spec = importlib.util.spec_from_loader(loader.name, loader)
+module = importlib.util.module_from_spec(spec)
+loader.exec_module(module)
 
 
-def main():
-    path = Path(__file__).resolve().parent.parent / "bin" / "strfry-prune-events"
-    loader = importlib.machinery.SourceFileLoader("strfry_prune_events", str(path))
-    spec = importlib.util.spec_from_loader(loader.name, loader)
-    module = importlib.util.module_from_spec(spec)
-    loader.exec_module(module)
+class PruneTests(unittest.TestCase):
+    def test_indexed_age_only_and_no_scan(self):
+        for age in (172800, 1):
+            args = [str(path), "--binary", "/fake/strfry", "--config", "/fake/config",
+                    "--age-seconds", str(age)]
+            with patch.object(module.subprocess, "run") as run, \
+                 patch.object(module.subprocess, "Popen") as scan, \
+                 patch("sys.argv", args):
+                self.assertEqual(module.main(), 0)
+            run.assert_called_once_with(
+                ["/fake/strfry", "--config", "/fake/config", "--verbosity=WARNING",
+                 "delete", "--age", str(age)], check=True, stdout=subprocess.DEVNULL)
+            scan.assert_not_called()
 
-    now = 2_000_000
-    events = [
-        {"id": "old_last", "kind": 1059, "created_at": now - 172801, "tags": []},
-        {"id": "ephemeral", "kind": 20001, "created_at": now - 91, "tags": []},
-        {"id": "nip40", "kind": 1, "created_at": now, "tags": [["expiration", str(now - 1)]]},
-        {"id": "live", "kind": 1401, "created_at": now, "tags": []},
-    ]
-    calls = []
+    def test_failure_propagates_so_systemd_does_not_stamp_success(self):
+        with patch.object(module.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "delete")), \
+             patch("sys.argv", [str(path)]), patch("builtins.print") as output:
+            with self.assertRaises(subprocess.CalledProcessError):
+                module.main()
+            output.assert_not_called()
+        unit = (path.parent.parent / "systemd/strfry-prune.service").read_text()
+        self.assertIn("ExecStart=/usr/local/libexec/strfry-prune-events", unit)
+        self.assertIn("ExecStartPost=/usr/local/libexec/strfry-prune-stamp", unit)
 
-    def record(command, **kwargs):
-        calls.append(command)
-        return None
-
-    with patch.object(module.subprocess, "run", side_effect=record), \
-         patch.object(module.subprocess, "Popen", return_value=FakeScan(events)), \
-         patch.object(module.time, "time", return_value=now), \
-         patch.object(module.sys, "argv", ["strfry-prune-events", "--binary", "/fake/strfry"]):
-        assert module.main() == 0
-
-    assert calls[0][-3:] == ["delete", "--age", "172800"]
-    removed = set()
-    for command in calls[1:]:
-        removed.update(json.loads(command[-1])["ids"])
-    assert removed == {"old_last", "ephemeral", "nip40"}, removed
-    print("PASS: last old event, ephemeral and NIP-40 removed; live event preserved")
+    def test_invalid_age_does_not_delete_anything(self):
+        with patch.object(module.subprocess, "run") as run, patch("sys.argv", [str(path), "--age-seconds", "0"]):
+            with self.assertRaises(SystemExit) as exit:
+                module.main()
+            self.assertEqual(exit.exception.code, 2)
+            run.assert_not_called()
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()
