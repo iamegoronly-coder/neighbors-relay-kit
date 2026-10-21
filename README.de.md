@@ -4,6 +4,8 @@
 
 Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in Home Bills. Es basiert auf unseren eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Unsere Website ist nicht enthalten. Das Update vom 21. Oktober 2026 senkt die Ereignisgrenze auf 60 KiB und entfernt den redundanten vollständigen Datenbankscan; beide eingebauten Relays verwenden diese Korrekturen bereits. Der neue Testkandidat heißt `v0.1.0-test.3`. Frühere Tags und Archive bleiben unverändert. Eine Neuinstallation dieses Kandidaten auf einem frischen VPS steht aus; der bisherige Test-VPS wurde gelöscht.
 
+Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-VPS**. ARM64, Debian und die automatische Installation neben vorhandenem Caddy folgen separat; für vorhandene Server gilt die manuelle Anleitung.
+
 > **Status.** Das Kit stellt ein Relay bereit und ändert keine Client-Einstellungen automatisch.
 > Ein eigenes Relay setzt eine App-Version mit entsprechender Routing-Unterstützung voraus.
 > Repository und Test-Releases bleiben privat; Veröffentlichungsstatus siehe unten.
@@ -37,15 +39,33 @@ Betreiberänderungen sind davon getrennt.
 
 ### Authentifizierung
 
-NIP-42 AUTH ist absichtlich deaktiviert: Neighbors beantwortet AUTH-Challenges noch nicht, auch
-nicht beim Lesen delegierter Gateway-Postfächer. Jeder kann daher Chiffretext und sichtbare Tags
-abfragen sowie korrekt signierte Ereignisse an fremde `#p` senden; die App prüft Nachrichten
-weiterhin Ende zu Ende vor der Annahme. AUTH mit `restrictedReadKinds = "4, 1059"` und
-`restrictReadToInvolvedPubkey = true` würde das Lesen dieser Kinds auf authentifizierte beteiligte
-Schlüssel begrenzen (Empfänger im `p`-Tag oder äußerer Ereignisautor). Das erschwert massenhaftes
-Sammeln, verhindert aber weder unerwünschtes Schreiben noch die Sichtbarkeit beim Betreiber.
-Nicht einfach für aktuelle Clients einschalten: Challenge-Signaturen, Relay-URL-Prüfung und
-Gateway-Delegation müssen zuerst gemeinsam unterstützt werden.
+NIP-42 AUTH bleibt **standardmäßig ausgeschaltet**; beide eingebauten Relays bleiben unverändert.
+Der aktuelle Quellstand ergänzt `setup.sh --auth` für eine neue Installation eines eigenen Relays;
+**das bestehende test.3-Archiv enthält diese Option nicht**. Vor der Aktivierung für Nutzer sind eine
+kompatible App-Version und ein neu gepacktes, geprüftes Kit erforderlich. Interne Unterstützung für
+eigene Relays und NIP-42 ist in der App implementiert; die sichtbare Relay-Auswahl ist noch nicht veröffentlicht.
+
+Mit `--auth` setzt der Assistent vor dem Start von strfry `enabled = true`,
+`serviceUrl = "wss://<domain>/relay"`, `restrictedReadKinds = "1059"` und
+`restrictReadToInvolvedPubkey = true`. Die Auswahl wird gespeichert; spätere `--check`-Aufrufe
+verlangen NIP-42 im NIP-11-Dokument. Das prüft die Ankündigung, nicht die Zugriffskontrolle;
+diese prüft der Integrationstest am echten Server. Der Client bestätigt seinen **separaten
+Inbox-Schlüssel für dieses eigene Netz**, nicht seine Bluetooth-Identität, und wiederholt das
+geschlossene Abonnement nach der passenden AUTH-Bestätigung. Eine Ablehnung beendet den Versuch
+ohne automatische Wiederverbindungsschleife.
+
+Kind 1059 darf nur ein authentifizierter beteiligter Schlüssel lesen: Empfänger im `p`-Tag oder
+äußerer Ereignisautor. Schreiben bleibt öffentlich: Jeder darf korrekt signierte Hüllen an fremde
+`p`-Adressen senden; die Ende-zu-Ende-Prüfung der App entscheidet über die Annahme. Andere Kinds
+beschränkt diese Option nicht. AUTH verbirgt keine Metadaten vor dem Betreiber. Abonnementfilter
+zeigen bereits angefragte Inbox-Schlüssel; AUTH bestätigt zusätzlich deren Besitz und verknüpft
+sie mit der Verbindung. Caddy sieht deren IP. Die normale Protokollierung bleibt unverändert.
+
+**Eigene Relays unterstützen direkte Internetzustellung: Gateways und Kuriere sind mit und ohne
+AUTH nicht verfügbar.** Der Code erzwingt diese Grenze; die spätere Relay-Einstellung muss darauf
+hinweisen. Bluetooth und gewöhnliche Bluetooth-Mesh-Zustellung bleiben verfügbar. Eine Delegation
+an Gateways ist nicht implementiert. Siehe [AUTH-Prüfprotokoll](docs/custom-relay-auth-2026-10-21.md)
+und [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
 ### Ereignistypen
 
@@ -60,7 +80,7 @@ Gateway-Delegation müssen zuerst gemeinsam unterstützt werden.
 - **Verlauf:** normale Ereignisse werden angenommen, wenn `created_at` höchstens 48 Stunden alt und höchstens 20 Minuten in der Zukunft liegt. Bereitstellung und Aufbewahrung bis `created_at + 48 h`, Bereinigung alle 2 Minuten.
 - **Kurzlebige Kinds 20000–29999:** Annahme innerhalb ±60 Sekunden zur Relay-Uhr; 90 Sekunden ab `created_at`, interner Ablaufindex-Cron etwa alle 9 Sekunden (normalerweise 90–99 Sekunden bei aktueller Datierung, mit erlaubtem Zeitvorlauf von 60 Sekunden bis etwa 160 Sekunden ab Empfang; unter Last oder bei Stillstand länger), kein Offline-Postfach.
 - **NIP-40 `expiration`:** bereits abgelaufene Ereignisse werden abgelehnt, beim Lesen herausgefiltert (gepatchtes strfry) und durch den internen Ablaufindex-Cron entfernt. Der externe 2-Minuten-Job führt nur `delete --age 172800` aus; sein Erfolgsstempel überwacht die Altersbereinigung, nicht den internen Cron.
-- **Kein NIP-42 AUTH.** Öffentliches Relay; Missbrauch wird durch Ressourcenlimits begrenzt.
+- **NIP-42 AUTH standardmäßig aus.** Im aktuellen Quellstand optional eingeschränktes Lesen auf eigenen Relays; siehe Authentifizierung. Schreiben und Ressourcenlimits bleiben unverändert.
 
 | Grenze | Mechanismus |
 |---|---|

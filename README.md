@@ -10,6 +10,8 @@ maintenance scan; both built-in relays already use these fixes. The new test can
 `v0.1.0-test.3`. Earlier test tags/archives are retained unchanged. A fresh clean-VPS
 installation of this candidate is pending; the former test VPS has been deleted.
 
+First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Debian and automatic installation alongside an existing Caddy are separate follow-up stages; use the manual deployment guide for an existing server.
+
 
 > **Status.** This kit deploys a relay; it does not change client settings automatically.
 > Connecting to a custom relay requires an app build that supports custom-relay routing.
@@ -51,15 +53,32 @@ recorded: Caddy error/runtime logs, host/provider logs and operator changes are 
 
 ### Authentication
 
-NIP-42 AUTH is deliberately disabled because Neighbors does not yet answer AUTH challenges,
-including on connections reading delegated gateway inboxes. Today anyone can query ciphertext
-and visible tags, and can submit correctly signed events addressed to someone else's `#p`;
-end-to-end validation still determines which messages the app accepts. AUTH plus
-`restrictedReadKinds = "4, 1059"` and `restrictReadToInvolvedPubkey = true` would restrict reading
-those kinds to an authenticated involved key (the recipient's `p` key or the event's outer author
-key), reducing bulk collection. This does not encrypt metadata, block unsolicited writes or hide
-traffic from the operator. Do not simply enable it for current clients: client signing, service-URL
-validation and gateway delegation need coordinated support first.
+NIP-42 AUTH remains **off by default** and is unchanged on both built-in relays. The current
+source tree adds `setup.sh --auth` for a fresh custom-relay installation; **the existing test.3
+archive does not contain this option**. Wait for a compatible client release and a newly packaged,
+validated kit before enabling it for users. The app now has internal custom-relay/NIP-42 support;
+the user-facing relay selector has not shipped.
+
+With `--auth`, the wizard sets `enabled = true`, `serviceUrl = "wss://<domain>/relay"`,
+`restrictedReadKinds = "1059"` and `restrictReadToInvolvedPubkey = true` before starting strfry.
+It saves the choice; subsequent `--check` requires NIP-11 to advertise 42. This check verifies the
+advertisement, not access control; the real-server integration test checks the restrictions.
+The client proves ownership of its **separate inbox key for this custom network**, not its Bluetooth
+identity, and retries its closed inbox subscription after the matching AUTH acknowledgement.
+An AUTH refusal ends that attempt rather than causing an automatic reconnect loop.
+
+Only an authenticated involved key (the recipient's `p` key or outer event author's key) may read
+kind 1059. Writes remain public: anyone may submit a correctly signed envelope to a `p` address;
+end-to-end checks still decide what the app accepts. Other kinds are not restricted by this option.
+AUTH does not hide metadata from the operator. Subscription filters already reveal requested
+inbox keys; AUTH additionally proves ownership and links that key to the connection. Caddy sees
+its IP address. Normal logging remains unchanged.
+
+**Custom relays support direct Internet delivery only: gateways and couriers are unavailable, with
+or without AUTH.** The app enforces this boundary; the future relay setting must show this warning.
+Bluetooth and ordinary Bluetooth mesh remain available. No gateway delegation is implemented.
+See [the AUTH validation record](docs/custom-relay-auth-2026-10-21.md) and
+[NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
 ### Event kinds
 
@@ -78,7 +97,7 @@ validation and gateway delegation need coordinated support first.
 - **NIP-40 `expiration`:** already-expired events are rejected; expired events are filtered at read
   time (patched strfry) and physically removed by the internal expiration-index cron.
   The external 2-minute job only runs `delete --age 172800`; its success stamp monitors age maintenance, not the internal cron.
-- **No NIP-42 AUTH.** The relay is public; abuse limits are resource limits.
+- **NIP-42 AUTH off by default.** Optional restricted reads for custom relays in the current source tree; see Authentication above. Writes and resource limits remain unchanged.
 
 | Limit | Mechanism |
 |---|---|

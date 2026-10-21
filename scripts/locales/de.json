@@ -28,7 +28,7 @@
   "source_method": "Quellcode-Build mit dem aktuellen Ubuntu-Compiler (der Hash kann vom Release abweichen)",
   "binary_path": "Datei: {v0}",
   "caddy_plan": "Caddy: {v0}, offizielles APT-Repository, Version wird festgehalten.",
-  "installation_plan": "Abhängigkeiten, HTTPS, der strfry-Dienst und zwei Timer werden installiert/eingerichtet.\nDateien: /etc/caddy, /etc/strfry, /usr/local/bin/strfry, /usr/local/libexec,\n/etc/systemd/system, /var/lib/strfry und /var/lib/neighbors-relay-setup.\nDas Relay ist öffentlich: Wer die Adresse kennt, kann sich verbinden; AUTH ist deaktiviert.\nVorhandene Relays werden nicht aktualisiert; kein Swap wird angelegt; SSH und Firewall bleiben unverändert.",
+  "installation_plan": "Abhängigkeiten, HTTPS, der strfry-Dienst und zwei Timer werden installiert/eingerichtet.\nDateien: /etc/caddy, /etc/strfry, /usr/local/bin/strfry, /usr/local/libexec,\n/etc/systemd/system, /var/lib/strfry und /var/lib/neighbors-relay-setup.\nVorhandene Relays werden nicht aktualisiert; kein Swap wird angelegt; SSH und Firewall bleiben unverändert.",
   "caddy_restored": "Caddy hat die Konfiguration abgelehnt. Die Paketkonfiguration wurde wiederhergestellt; das Relay bleibt auf Loopback.",
   "preparing_files": "Dateien vorbereiten",
   "installing_dependencies": "Abhängigkeiten installieren",
@@ -45,7 +45,7 @@
   "https_progress": "[5/5] HTTPS wird geprüft; die Ausstellung des Zertifikats kann einige Minuten dauern…",
   "nip11_mismatch": "HTTPS antwortet, aber NIP-11 entspricht nicht der Relay-Konfiguration.",
   "metrics_exposed": "/metrics muss am HTTPS-Endpunkt den Status 404 liefern.",
-  "ready": "\nBereit: wss://{v0}/relay\nDienste, lokales HTTPS und die Sperre von /metrics wurden geprüft.\nPrüfen Sie die externe Erreichbarkeit und X25519MLKEM768 von einem anderen Rechner:\n  OPENSSL=/pfad/zu/openssl-3.5+ sh scripts/check-pq-tls.sh {v1}\nDie App bietet noch keine Einstellung für ein eigenes Relay.",
+  "ready": "\nBereit: wss://{v0}/relay\nDienste, lokales HTTPS und gesperrtes /metrics geprüft.\nExterne Erreichbarkeit und X25519MLKEM768 von einem anderen Rechner prüfen:\n  OPENSSL=/path/to/openssl-3.5+ sh scripts/check-pq-tls.sh {v1}\nClient mit eigener Relay-Auswahl erforderlich; AUTH benötigt zusätzlich NIP-42.",
   "https_not_ready": "Die Dienste sind installiert, aber HTTPS ist noch nicht bereit. Prüfen Sie A/AAAA, die Erreichbarkeit von TCP 80/443 und das Caddy-Protokoll. Starten Sie danach sh setup.sh --check.\n",
   "waiting_certificate": "Warten auf das Zertifikat…",
   "description": "Lokaler Relay-Installationsassistent für ein frisches Ubuntu 24.04 x86_64.",
@@ -74,5 +74,9 @@
   "options_title": "Optionen",
   "help_help": "diese Hilfe anzeigen und beenden",
   "language_help": "Sprache des Assistenten",
-  "mode_help": "Binärdatei installieren oder aus Quellen kompilieren"
+  "mode_help": "Binärdatei installieren oder aus Quellen kompilieren",
+  "auth_help": "NIP-42 zum Lesen privater Umschläge verlangen (kompatibler Client für eigene Relays erforderlich)",
+  "auth_plan": "AUTH aktiviert: Kind 1059 ist nur für authentifizierte beteiligte Schlüssel lesbar. Schreiben bleibt öffentlich. Das Relay erhält eine bestätigte Verknüpfung von Postfachschlüssel und Verbindung; Caddy sieht IP-Adressen. Gateway- und Kuriermodi sind bei eigenen Relays nicht verfügbar. Erst nach Installation eines Clients mit NIP-42 aktivieren.",
+  "public_plan": "AUTH deaktiviert: Jeder mit Kenntnis der Adresse kann verschlüsselte Inhalte und sichtbare Tags lesen oder Ereignisse senden.",
+  "auth_template_mismatch": "Die AUTH-Konfigurationsvorlage wurde geändert; Start mit unerwarteten Einschränkungen verweigert."
 }

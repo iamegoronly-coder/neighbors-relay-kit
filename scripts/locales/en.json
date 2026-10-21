@@ -28,7 +28,7 @@
   "source_method": "source build with Ubuntu's current compiler (the hash may differ from the release)",
   "binary_path": "File: {v0}",
   "caddy_plan": "Caddy: {v0}, official APT repository, version will be held.",
-  "installation_plan": "Dependencies, HTTPS, the strfry service and two timers will be installed/configured.\nFiles: /etc/caddy, /etc/strfry, /usr/local/bin/strfry, /usr/local/libexec,\n/etc/systemd/system, /var/lib/strfry and /var/lib/neighbors-relay-setup.\nThe relay is public: anyone who knows its address can connect; AUTH is disabled.\nExisting relays are not upgraded; swap is not created; SSH and firewall are not changed.",
+  "installation_plan": "Dependencies, HTTPS, the strfry service and two timers will be installed/configured.\nFiles: /etc/caddy, /etc/strfry, /usr/local/bin/strfry, /usr/local/libexec,\n/etc/systemd/system, /var/lib/strfry and /var/lib/neighbors-relay-setup.\nExisting relays are not upgraded; swap is not created; SSH and firewall are not changed.",
   "caddy_restored": "Caddy rejected the configuration. The package-default file was restored; the relay remains on loopback.",
   "preparing_files": "preparing files",
   "installing_dependencies": "installing dependencies",
@@ -45,7 +45,7 @@
   "https_progress": "[5/5] Checking HTTPS; obtaining a certificate may take several minutes…",
   "nip11_mismatch": "HTTPS responded, but NIP-11 does not match the relay configuration.",
   "metrics_exposed": "/metrics must return 404 through the HTTPS endpoint.",
-  "ready": "\nReady: wss://{v0}/relay\nServices, local HTTPS and blocked /metrics were checked.\nCheck external reachability and X25519MLKEM768 from another machine:\n  OPENSSL=/path/to/openssl-3.5+ sh scripts/check-pq-tls.sh {v1}\nThe app does not yet offer a custom-relay setting.",
+  "ready": "\nReady: wss://{v0}/relay\nServices, local HTTPS and blocked /metrics were checked.\nCheck external reachability and X25519MLKEM768 from another machine:\n  OPENSSL=/path/to/openssl-3.5+ sh scripts/check-pq-tls.sh {v1}\nUse a client build with custom-relay routing; AUTH also requires NIP-42 support.",
   "https_not_ready": "Services are installed, but HTTPS is not ready. Check A/AAAA, TCP 80/443 reachability and Caddy logs. Then run sh setup.sh --check.\n",
   "waiting_certificate": "Waiting for the certificate…",
   "description": "Local relay setup wizard for clean Ubuntu 24.04 x86_64.",
@@ -74,5 +74,9 @@
   "options_title": "options",
   "help_help": "show this help and exit",
   "language_help": "wizard language",
-  "mode_help": "install a binary or compile from source"
+  "mode_help": "install a binary or compile from source",
+  "auth_help": "require NIP-42 for reading private envelopes (needs a compatible custom-relay client)",
+  "auth_plan": "AUTH enabled: kind 1059 can be read only by an authenticated involved key. Writes remain public. The relay learns a verified inbox-key/connection link; Caddy sees IPs. Gateway and courier modes are unavailable on custom relays. Use only after installing a client with NIP-42 support.",
+  "public_plan": "AUTH disabled: anyone knowing the address can read ciphertext and visible tags or submit events.",
+  "auth_template_mismatch": "AUTH configuration template changed; refusing to start with unexpected restrictions."
 }

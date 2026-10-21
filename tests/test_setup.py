@@ -33,6 +33,8 @@ class FakeRunner:
         self.https_ok, self.metrics_status, self.reload_fail = True, '404', False
         self.fail_apt, self.bad_info, self.health_fail = False, False, False
         self.fingerprint = module.key_verifier.FINGERPRINT
+        self.auth_supported = False
+        self.config_at_start = None
 
     def run(self, args, *, capture=False, check=True, **kwargs):
         args = [str(a) for a in args]
@@ -61,7 +63,7 @@ class FakeRunner:
             elif args[-1].endswith('/metrics'):
                 text = self.metrics_status
             else:
-                text = '{}' if self.bad_info else json.dumps({'limitation': {'max_subscriptions': 20}, 'supported_nips': [1, 40]})
+                text = '{}' if self.bad_info else json.dumps({'limitation': {'max_subscriptions': 20}, 'supported_nips': [1, 40] + ([42] if self.auth_supported else [])})
         elif args[0] == 'sh' and args[1].endswith('/build-strfry.sh'):
             path = self.root / 'opt/strfry-src/strfry'
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -74,6 +76,12 @@ class FakeRunner:
             destination = self.root / 'usr/local/bin/strfry'
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(executable, destination)
+            config = self.root / 'etc/strfry/strfry.conf'
+            config.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(KIT / 'config/strfry.conf', config)
+            config.chmod(0o640)
+        elif args[:3] == ['systemctl', 'enable', '--now'] and 'strfry.service' in args:
+            self.config_at_start = (self.root / 'etc/strfry/strfry.conf').read_text()
         elif args[:3] == ['systemctl', 'reload', 'caddy'] and self.reload_fail:
             self.reload_fail = False
             raise subprocess.CalledProcessError(1, args)
@@ -199,10 +207,43 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(self.state()['phase'], 'complete')
         self.assertEqual((self.root / 'usr/local/bin/strfry').read_bytes(), elf())
         self.assertFalse(any('/build-strfry.sh' in ' '.join(c) for c in self.runner.calls))
+        packages = [arg for call in self.runner.calls if call[0] == 'apt-get' for arg in call]
+        self.assertNotIn('git', packages)
+        self.assertNotIn('binutils', packages)
         self.assertIn(['apt-mark', 'hold', 'caddy'], self.runner.calls)
         config = (self.root / 'etc/caddy/Caddyfile').read_text()
         self.assertIn('relay.example.org', config)
         self.assertIn('127.0.0.1:7777', config)
+
+    def test_auth_is_opt_in_saved_and_configured_before_start(self):
+        self.setup.auth = True
+        self.runner.auth_supported = True
+        self.run_install()
+        config = (self.root / 'etc/strfry/strfry.conf').read_text()
+        self.assertEqual(self.runner.config_at_start, config)
+        self.assertIn('auth {\n        enabled = true', config)
+        self.assertIn('serviceUrl = "wss://relay.example.org/relay"', config)
+        self.assertIn('restrictedReadKinds = "1059"', config)
+        self.assertIn('restrictReadToInvolvedPubkey = true', config)
+        self.assertIn('compression {\n        enabled = false', config)
+        self.assertNotIn('No AUTH.', config)
+        self.assertEqual((self.root / 'etc/strfry/strfry.conf').stat().st_mode & 0o777, 0o640)
+        self.assertIs(self.state()['auth'], True)
+        self.runner.auth_supported = False
+        with patch.object(module, 'Setup', return_value=self.setup):
+            self.assertEqual(module.main(['--check']), 1)
+        self.runner.auth_supported = True
+        with patch.object(module, 'Setup', return_value=self.setup):
+            self.assertEqual(module.main(['--check']), 0)
+
+    def test_auth_plan_has_no_side_effects(self):
+        args = ['--lang', 'en', '--domain', 'relay.example.org', '--binary', str(self.binary),
+                '--sha256', self.sha, '--auth', '--plan']
+        with patch.object(module, 'Setup', return_value=self.setup):
+            self.assertEqual(module.main(args), 0)
+        self.assertTrue(self.setup.auth)
+        self.assertFalse((self.root / 'var/lib/neighbors-relay-setup').exists())
+        self.assertFalse(any(c[0] == 'apt-get' for c in self.runner.calls))
 
     def test_source_path_builds_then_installs(self):
         self.run_install('source')

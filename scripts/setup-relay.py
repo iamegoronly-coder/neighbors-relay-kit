@@ -21,7 +21,7 @@ KIT = Path(__file__).resolve().parents[1]
 GIB = 1024 ** 3
 UNITS = ['strfry.service', 'strfry-prune.timer', 'strfry-disk-guard.timer']
 RUNTIME = ['ca-certificates', 'curl', 'gnupg', 'debian-keyring', 'debian-archive-keyring',
-           'apt-transport-https', 'git', 'binutils', 'python3', 'liblmdb0', 'libssl3t64',
+           'apt-transport-https', 'python3', 'liblmdb0', 'libssl3t64',
            'zlib1g', 'libsecp256k1-1', 'libzstd1', 'libstdc++6']
 spec = importlib.util.spec_from_file_location('verify_binary', KIT / 'scripts/verify-binary.py')
 verifier = importlib.util.module_from_spec(spec)
@@ -91,6 +91,7 @@ class Setup:
     def __init__(self, kit=KIT, root=Path('/'), runner=None):
         # root injection is for unit tests only; no CLI/env override exposes it to an installation.
         self.kit, self.root = Path(kit), Path(root)
+        self.auth = False
         self.runner = runner or Runner()
         self.stage = tr('preparation')
         self.started = False
@@ -204,11 +205,12 @@ class Setup:
             print(tr('binary_path', v0=binary))
         print(tr('caddy_plan', v0=self.metadata()['caddy_version']))
         print(tr('installation_plan'), flush=True)
+        print(tr('auth_plan') if self.auth else tr('public_plan'), flush=True)
 
     def write_state(self, domain, phase, expected=None):
         folder = self.path('/var/lib/neighbors-relay-setup')
         folder.mkdir(mode=0o700, parents=True, exist_ok=True)
-        data = {'domain': domain, 'phase': phase, 'binary_sha256': expected}
+        data = {'domain': domain, 'phase': phase, 'binary_sha256': expected, 'auth': self.auth}
         temp = folder / 'state.json.tmp'
         temp.write_text(json.dumps(data, indent=2) + '\n')
         temp.chmod(0o600)
@@ -217,6 +219,27 @@ class Setup:
     def apt(self, *args):
         env = dict(os.environ, DEBIAN_FRONTEND='noninteractive', NEEDRESTART_MODE='l')
         self.run(['apt-get', '-o', 'DPkg::Lock::Timeout=600', '-o', 'APT::Update::Error-Mode=any', *args], env=env, timeout=3600)
+
+    def relay_configuration(self, domain):
+        config = (self.kit / 'config/strfry.conf').read_text()
+        if self.auth:
+            replacements = {
+                '        enabled = false': '        enabled = true',
+                '        serviceUrl = ""': f'        serviceUrl = "wss://{domain_name(domain)}/relay"',
+                '        restrictedReadKinds = ""': '        restrictedReadKinds = "1059"',
+                '        restrictReadToInvolvedPubkey = false': '        restrictReadToInvolvedPubkey = true',
+            }
+            # Only the auth block; other enabled=false settings must remain unchanged.
+            start = config.index('    auth {')
+            end = config.index('    }', start)
+            block = config[start:end]
+            for old, new in replacements.items():
+                if block.count(old) != 1:
+                    raise SetupError(tr('auth_template_mismatch'))
+                block = block.replace(old, new)
+            config = config[:start] + block + config[end:]
+            config = config.replace('No AUTH.', 'NIP-42: kind 1059 reads restricted to involved keys; writes remain public.')
+        return config
 
     def configure_caddy(self, domain, work):
         config = (self.kit / 'config/Caddyfile.example').read_text().replace('relay.example.org', domain)
@@ -288,6 +311,8 @@ class Setup:
             self.stage = tr('installing_relay')
             print(tr('relay_progress'), flush=True)
             self.run(['sh', self.kit / 'scripts/install.sh', '--binary', staged, '--sha256', expected, '--no-start'])
+            # Fresh install only, before the service can start; keep install.sh permissions/owner.
+            self.path('/etc/strfry/strfry.conf').write_text(self.relay_configuration(domain))
             self.run(['systemctl', 'enable', '--now', *UNITS])
             self.run(['systemctl', 'start', 'strfry-prune.service'])
             self.run(['systemctl', 'enable', '--now', 'caddy'])
@@ -312,7 +337,8 @@ class Setup:
             if info.returncode == 0:
                 try:
                     data = json.loads(info.stdout)
-                    valid = data['limitation']['max_subscriptions'] == 20 and 40 in data['supported_nips']
+                    valid = (data['limitation']['max_subscriptions'] == 20 and 40 in data['supported_nips']
+                             and (not self.auth or 42 in data['supported_nips']))
                 except (ValueError, KeyError, TypeError):
                     valid = False
                 if not valid:
@@ -342,6 +368,7 @@ def parser():
     result.add_argument('--plan', action='store_true', help=tr('plan_help'))
     result.add_argument('--yes', action='store_true', help=tr('yes_help'))
     result.add_argument('--check', action='store_true', help=tr('check_help'))
+    result.add_argument('--auth', action='store_true', help=tr('auth_help'))
     result.add_argument('--tls-timeout', type=int, default=180, help=tr('timeout_help'))
     return result
 
@@ -352,14 +379,19 @@ def main(argv=None):
         choose_language(list(sys.argv[1:] if argv is None else argv))
         setup.stage = tr('preparation')
         args = parser().parse_args(argv)
+        setup.auth = args.auth
         if not 1 <= args.tls_timeout <= 600:
             raise SetupError(tr('invalid_timeout'))
         if args.check:
             if args.plan or args.mode or args.binary or args.sha256 or args.yes:
                 raise SetupError(tr('check_conflict'))
-            domain = args.domain
+            state_path = setup.path('/var/lib/neighbors-relay-setup/state.json')
+            state = json.loads(state_path.read_text()) if state_path.exists() else {}
+            domain = args.domain or state.get('domain')
             if not domain:
-                domain = json.loads(setup.path('/var/lib/neighbors-relay-setup/state.json').read_text())['domain']
+                raise SetupError(tr('domain_required'))
+            if state.get('domain') == domain_name(domain):
+                setup.auth = args.auth or state.get('auth', False) is True
             setup.check(domain_name(domain), args.tls_timeout)
             return 0
         interactive = sys.stdin.isatty()

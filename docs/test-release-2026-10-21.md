@@ -10,7 +10,9 @@ Earlier tags and archives remain unchanged; test.3 replaces them for further tes
 - External maintenance uses only indexed age deletion and a success stamp. Internal strfry
   cron handles ephemeral/NIP-40 expiration; no repeating full-database scan.
 - Smoke-policy wait is bounded to 180 seconds, including query time, with 5-second polls.
-- Candidate metadata and EN/RU/DE installation instructions refer to test.3.
+- Candidate metadata and EN/RU/DE READMEs refer to test.3. Quickstart files inside the
+  immutable archive still contain test.2 references; corrected EN/RU/DE quickstarts are on main.
+  Use main’s pinned test.3 download instructions, not the stale bundled quickstart links.
 - Binary, upstream commit, patch and toolchain lock are unchanged. The packager verifies all
   binary/source/license payload checksums before reusing the payload. Configuration and scripts
   come from the new source tag. The archive never overwrites an earlier output.
