@@ -205,7 +205,7 @@ git clone --branch v0.1.0-test.5 --single-branch \
 
 Для опытных операторов, которым нужны отдельные шаги. От root на сервере, из закрытой копии репозитория (например, `/root/neighbors-relay`).
 
-1. **Caddy 2.10+** из официального репозитория — [docs/caddy.md](docs/caddy.ru.md#new-server).
+1. **Caddy 2.10+** из официального репозитория — [docs/caddy.md](docs/caddy.ru.md#новый-сервер).
 2. **Сборка strfry** закреплённого commit с патчем ([docs/patch.md](docs/patch.ru.md)):
    ```sh
    sh scripts/build-strfry.sh
@@ -267,7 +267,7 @@ sudo -u nostr-relay /usr/local/bin/strfry --config /etc/strfry/strfry.conf --ver
 
 ## Обновление
 
-- **Caddy:** плановое, с резервной копией и откатом — [docs/caddy.md](docs/caddy.ru.md#upgrading).
+- **Caddy:** плановое, с резервной копией и откатом — [docs/caddy.md](docs/caddy.ru.md#обновление).
 - **strfry:** патч привязан к закреплённому commit. Новая версия upstream — это пересмотр и повторная
   проверка патча, отдельная сборка, сохранение прежних бинарника и конфига и замена только бинарника
   при остановленном реле. Никогда не запускайте старый и исправленный бинарники на одной базе и не
@@ -281,7 +281,7 @@ sudo -u nostr-relay /usr/local/bin/strfry --config /etc/strfry/strfry.conf --ver
 
 | Команда | Нужно | Проверяет |
 |---|---|---|
-| `sh tests/run-unit-tests.sh` | Python 3.11+ | Политику health, очистку, disk guard, манифесты, отказы TLS, команды обновления/отката Caddy, проверку бинарника, мастер установки, упаковку, синтаксис shell |
+| `sh tests/run-unit-tests.sh` | Python 3.11+ | Политику health, очистку, disk guard, манифесты, отказы TLS, команды обновления/отката Caddy, проверку бинарника, мастер установки, упаковку, ссылки в документации и ссылки на кандидата, синтаксис shell |
 | `OPENSSL=/path/to/openssl python3 tests/test_pq_tls_local.py` | OpenSSL 3.5+ | Временный TLS-сервер на loopback: верное/неверное имя и недоверенный сертификат; обе группы |
 | `python3 tests/test_integration.py --binary /opt/strfry-src/strfry` | strfry с патчем, `websockets`, `coincurve` | Одноразовая LMDB на loopback: лимит соединений, NIP-40 с `limit=1`, live-доставка через полные очистки, битый JSON, медленный читатель |
 | то же с `--capacity 100 --caddy` | + `caddy` в `PATH` | То же за Caddy, плюс доступность постороннего HTTP-пути при заполненном реле |

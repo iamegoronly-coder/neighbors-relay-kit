@@ -129,9 +129,9 @@ Von einem anderen Rechner mit OpenSSL 3.5+:
 OPENSSL=/path/to/openssl sh scripts/check-pq-tls.sh relay.example.org
 ```
 
-Nur ein externer Handshake bestätigt Erreichbarkeit und `X25519MLKEM768`; die Caddy-Version allein reicht nicht. Für Nachrichtentests siehe [Smoke-Test und Bereinigung](../README.de.md#manual-installation). Hybrides TLS macht die Ende-zu-Ende-Verschlüsselung der App nicht postquantenfest.
+Nur ein externer Handshake bestätigt Erreichbarkeit und `X25519MLKEM768`; die Caddy-Version allein reicht nicht. Für Nachrichtentests siehe [Smoke-Test und Bereinigung](../README.de.md#manuelle-installation). Hybrides TLS macht die Ende-zu-Ende-Verschlüsselung der App nicht postquantenfest.
 
-Die Installation ändert weder SSH, Firewall noch DNS, legt keinen Swap an und startet den Server nicht neu. Die festgehaltene Caddy-Version erfordert geplante [Updates und Rollbacks](caddy.de.md#upgrading).
+Die Installation ändert weder SSH, Firewall noch DNS, legt keinen Swap an und startet den Server nicht neu. Die festgehaltene Caddy-Version erfordert geplante [Updates und Rollbacks](caddy.de.md#aktualisierung).
 
 ## Lokales Paket erstellen
 

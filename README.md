@@ -285,7 +285,7 @@ and reload Caddy, then `systemctl disable --now strfry.service strfry-prune.time
 
 | Command | Needs | Checks |
 |---|---|---|
-| `sh tests/run-unit-tests.sh` | Python 3.11+ | Health policy, prune selection, disk guard, manifest cleanup, TLS failure paths, Caddy update/rollback and key verification, binary verification/comparison, setup wizard, packaging, shell syntax |
+| `sh tests/run-unit-tests.sh` | Python 3.11+ | Health policy, prune selection, disk guard, manifest cleanup, TLS failure paths, Caddy update/rollback and key verification, binary verification/comparison, setup wizard, packaging, documentation links and candidate references, shell syntax |
 | `OPENSSL=/path/to/openssl python3 tests/test_pq_tls_local.py` | OpenSSL 3.5+ | Disposable loopback TLS: matching/mismatched hostname and untrusted certificate; both groups |
 | `python3 tests/test_integration.py --binary /opt/strfry-src/strfry` | patched strfry, `websockets`, `coincurve` | Disposable LMDB on loopback: connection limit, NIP-40 with `limit=1`, live delivery across full prunes, malformed JSON, slow reader |
 | same with `--capacity 100 --caddy` | + `caddy` in `PATH` | The same behind Caddy, plus an unrelated HTTP path staying available when the relay is full |

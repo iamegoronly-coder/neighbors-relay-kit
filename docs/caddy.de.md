@@ -82,7 +82,7 @@ Bedient dasselbe Caddy auch eine Website, einen Seiten-Fingerabdruck für den sp
 
 ### 2. Repository hinzufügen
 
-Wie unter [Neuer Server](#new-server) bis `apt-cache policy caddy`; dann `V` auf die genaue `Candidate`-Version (2.10+) setzen.
+Wie unter [Neuer Server](#neuer-server) bis `apt-cache policy caddy`; dann `V` auf die genaue `Candidate`-Version (2.10+) setzen.
 
 ### 3. Aktuelles Caddyfile vor Installation mit der neuen Binärdatei prüfen
 

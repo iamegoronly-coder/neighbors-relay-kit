@@ -25,7 +25,7 @@ git clone --branch "$RELEASE_TAG" --single-branch "$REPOSITORY_URL" neighbors-re
 cd neighbors-relay
 ```
 
-Прочитайте установщик и конфигурацию. Настройте Caddy по [инструкции](caddy.ru.md#new-server),
+Прочитайте установщик и конфигурацию. Настройте Caddy по [инструкции](caddy.ru.md#новый-сервер),
 установите библиотеки на сервер реле:
 
 ```sh

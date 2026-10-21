@@ -173,7 +173,7 @@ Der Quellmodus lädt festgelegte Quellen und kompiliert das Relay, statt eine fe
 
 Für einzelne Schritte als root auf dem Server aus einer privaten Repository-Kopie arbeiten, beispielsweise `/root/neighbors-relay`.
 
-1. **Caddy 2.10+** aus dem offiziellen Repository: [Anleitung](docs/caddy.de.md#new-server).
+1. **Caddy 2.10+** aus dem offiziellen Repository: [Anleitung](docs/caddy.de.md#neuer-server).
 2. **strfry bauen**, festgelegter Commit mit [Patch](docs/patch.de.md):
    ```sh
    sh scripts/build-strfry.sh
@@ -225,7 +225,7 @@ sudo -u nostr-relay /usr/local/bin/strfry --config /etc/strfry/strfry.conf --ver
 
 ## Updates
 
-- **Caddy:** geplant mit Sicherung und [Rollback](docs/caddy.de.md#upgrading).
+- **Caddy:** geplant mit Sicherung und [Rollback](docs/caddy.de.md#aktualisierung).
 - **strfry:** Patch ist an den Commit gebunden. Bei neuer Upstream-Version Patch prüfen und neu testen, separat bauen, bisherige Datei und Konfiguration behalten und nur die Binärdatei bei gestopptem Relay ersetzen. Alten und gepatchten Build nie an derselben Datenbank betreiben; kein bewegliches `latest`. Siehe [Patch](docs/patch.de.md).
 
 Zum Abschalten ohne Datenlöschung Site-Block aus Caddyfile entfernen, Caddy prüfen und neu laden, dann `systemctl disable --now strfry.service strfry-prune.timer strfry-disk-guard.timer`. `/var/lib/strfry/db` wird nie automatisch gelöscht.
@@ -234,7 +234,7 @@ Zum Abschalten ohne Datenlöschung Site-Block aus Caddyfile entfernen, Caddy pr�
 
 | Befehl | Voraussetzung | Prüfung |
 |---|---|---|
-| `sh tests/run-unit-tests.sh` | Python 3.11+ | Health, Bereinigung, Disk Guard, Manifeste, TLS-Fehler, Caddy-Update/Rollback und Schlüssel, Binärvergleich, mehrsprachiger Assistent, Verpackung, Shell-Syntax |
+| `sh tests/run-unit-tests.sh` | Python 3.11+ | Health, Bereinigung, Disk Guard, Manifeste, TLS-Fehler, Caddy-Update/Rollback und Schlüssel, Binärvergleich, mehrsprachiger Assistent, Verpackung, Dokumentationslinks und Kandidatenverweise, Shell-Syntax |
 | `OPENSSL=/path/to/openssl python3 tests/test_pq_tls_local.py` | OpenSSL 3.5+ | Temporäres Loopback-TLS: passender/falscher Hostname, unvertrautes Zertifikat, beide Gruppen |
 | `python3 tests/test_integration.py --binary /opt/strfry-src/strfry` | gepatchtes strfry, `websockets`, `coincurve` | Temporäre LMDB auf Loopback: Verbindungslimit, NIP-40 mit `limit=1`, Zustellung nach vollständiger Bereinigung, fehlerhaftes JSON, langsamer Leser |
 | dasselbe mit `--capacity 100 --caddy` | zusätzlich `caddy` in `PATH` | Dasselbe hinter Caddy; separater HTTP-Pfad bleibt bei vollem Relay verfügbar |

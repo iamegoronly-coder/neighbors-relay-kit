@@ -82,7 +82,7 @@ ls -la /var/lib/caddy/.local/share/caddy/certificates/*/ | tee "$BK/certs.txt"
 
 ### 2. Подключение репозитория
 
-Как в разделе [Новый сервер](#new-server), до `apt-cache policy caddy`, затем задайте `V` равной точной версии `Candidate` (2.10+).
+Как в разделе [Новый сервер](#новый-сервер), до `apt-cache policy caddy`, затем задайте `V` равной точной версии `Candidate` (2.10+).
 
 ### 3. Проверка текущего Caddyfile новым бинарником до установки
 

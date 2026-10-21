@@ -14,6 +14,7 @@ python3 tests/test_setup.py
 python3 tests/test_setup_languages.py
 python3 tests/test_caddy_key.py
 python3 tests/test_local_package.py
+python3 tests/test_docs.py
 for script in bin/require-pq-caddy bin/strfry-prune-stamp scripts/*.sh tests/fake-systemctl.sh tests/test_install_container.sh; do
     sh -n "$script"
 done

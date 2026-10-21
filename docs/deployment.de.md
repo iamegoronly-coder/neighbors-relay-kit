@@ -18,7 +18,7 @@ Beide Wege verwenden dieselbe Konfiguration, Hilfsprogramme, systemd-Units und d
    git clone --branch "$RELEASE_TAG" --single-branch "$REPOSITORY_URL" neighbors-relay
    cd neighbors-relay
    ```
-3. Caddy gemäß [Caddy-Anleitung](caddy.de.md#new-server) installieren. Laufzeitbibliotheken auf dem Relay-VPS installieren (hier wird kein Relay kompiliert oder heruntergeladen):
+3. Caddy gemäß [Caddy-Anleitung](caddy.de.md#neuer-server) installieren. Laufzeitbibliotheken auf dem Relay-VPS installieren (hier wird kein Relay kompiliert oder heruntergeladen):
    ```sh
    sudo apt-get -o DPkg::Lock::Timeout=600 install -y --no-install-recommends \
      python3 git curl liblmdb0 libssl3t64 zlib1g libsecp256k1-1 libzstd1 libstdc++6
