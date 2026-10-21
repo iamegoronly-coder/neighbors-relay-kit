@@ -8,7 +8,7 @@ before running as root. Cloning makes inspection possible; it does not itself ma
 
 **Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.5` is a test release, not a production recommendation.
 
-**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.5 includes the 60 KiB event cap, indexed-only maintenance, a 180-second smoke-policy timeout and 26-hour retention of normal events. A fresh VPS installation of test.5 is pending; the old test VPS has been deleted. Local container tests do not replace a real systemd/TLS installation. The app setting for custom relays is still planned; AUTH is off by default. Test.5 includes optional `--auth`; it requires a compatible custom-relay client. See the README Authentication section.
+**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.5 includes the 60 KiB event cap, indexed-only maintenance, a 180-second smoke-policy timeout and 26-hour retention of normal events. A fresh VPS installation of test.5 is pending; the old test VPS has been deleted. Local container tests do not replace a real systemd/TLS installation. The app's relay page exists in its main branch and is not yet in a shipped build; AUTH is off by default. Test.5 includes optional `--auth`; it requires a compatible custom-relay client. See the README Authentication section.
 
 
 ## Language selection

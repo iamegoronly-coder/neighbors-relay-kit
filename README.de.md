@@ -7,7 +7,8 @@ Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protoc
 Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-VPS**. ARM64, Debian und die automatische Installation neben vorhandenem Caddy folgen separat; für vorhandene Server gilt die manuelle Anleitung.
 
 > **Status.** Das Kit stellt ein Relay bereit und ändert keine Client-Einstellungen automatisch.
-> Ein eigenes Relay setzt eine App-Version mit entsprechender Routing-Unterstützung voraus.
+> Ein eigenes Relay setzt die App-Version mit der Relay-Seite voraus (Chat-Einstellungen → Internet → Relay);
+> seit dem 21. Oktober 2026 liegt sie im main-Zweig der App und ist noch in keiner veröffentlichten Version.
 > Repository und Test-Releases bleiben privat; Veröffentlichungsstatus siehe unten.
 
 [Relay-/Client-Grenzen und Prüfergebnisse (2026-10-21, EN)](docs/relay-client-audit-2026-10-21.md).
@@ -51,8 +52,9 @@ Betreiberänderungen sind davon getrennt.
 
 NIP-42 AUTH bleibt **standardmäßig ausgeschaltet**; beide eingebauten Relays bleiben unverändert.
 Test.4 enthält `setup.sh --auth` für eine neue Installation eines eigenen Relays. Vor der Aktivierung
-für Nutzer sind eine kompatible App-Version und eine Prüfung auf einem frischen VPS erforderlich. Interne Unterstützung für
-eigene Relays und NIP-42 ist in der App implementiert; die sichtbare Relay-Auswahl ist noch nicht veröffentlicht.
+für Nutzer sind die App-Version mit der Relay-Seite und eine Prüfung auf einem frischen VPS erforderlich. Im main-Zweig
+der App ist die Seite vorhanden: NIP-11-Prüfung der exakten Adresse vor dem Speichern, Hinweis auf die Grenzen unten,
+AUTH-Status mit ausdrücklicher Wiederholung und Entfernen einer Adresse samt Daten dieses Netzes.
 
 Mit `--auth` setzt der Assistent vor dem Start von strfry `enabled = true`,
 `serviceUrl = "wss://<domain>/relay"`, `restrictedReadKinds = "1059"` und
@@ -71,12 +73,12 @@ zeigen bereits angefragte Inbox-Schlüssel; AUTH bestätigt zusätzlich deren Be
 sie mit der Verbindung. Caddy sieht deren IP. Die normale Protokollierung bleibt unverändert.
 
 **Eigene Relays unterstützen direkte Internetzustellung: Gateways und Kuriere sind mit und ohne
-AUTH nicht verfügbar.** Der Code erzwingt diese Grenze; die spätere Relay-Einstellung muss darauf
-hinweisen. Bluetooth und gewöhnliche Bluetooth-Mesh-Zustellung bleiben verfügbar. Eine Delegation
+AUTH nicht verfügbar.** Der Code erzwingt diese Grenze; die Relay-Seite weist vor dem Wechsel darauf
+hin. Bluetooth und gewöhnliche Bluetooth-Mesh-Zustellung bleiben verfügbar. Eine Delegation
 an Gateways ist nicht implementiert. Siehe [AUTH-Prüfprotokoll](docs/custom-relay-auth-2026-10-21.md)
 und [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
-Vor Veröffentlichung der Relay-Auswahl benötigt die App einen signierten, an das gewählte Netz gebundenen Inbox-Adressaustausch. Eigene Netze unterdrücken derzeit ältere ungebundene Bluetooth-/Gruppenadressen. Interne Zustelltests mit bekannten Inboxen prüfen keine Erkennung auf Geräten.
+Die App tauscht signierte, an das gewählte Netz gebundene Inbox-Adressen für Kontakte und Gruppen über Bluetooth aus; eigene Netze ignorieren ältere ungebundene Adressen. Nachbarn erreichen sich über das Internet nur mit demselben Relay. Ein Test auf echten Geräten gegen ein `--auth`-Relay steht noch aus.
 
 ### Ereignistypen
 

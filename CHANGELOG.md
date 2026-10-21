@@ -12,6 +12,8 @@ Dates are the day the tag was created. Validation records live in `docs/`.
 - Russian and German docs now link to their own heading anchors instead of the English ones.
 - Changelog, [release process](docs/release-process.md) and a quick-start block at the top of
   the three READMEs.
+- READMEs and quickstarts describe the app's relay page (in the app's main branch since
+  2026-10-21, not yet in a shipped build) instead of a planned selector.
 
 ## v0.1.0-test.5 — 2026-10-21
 

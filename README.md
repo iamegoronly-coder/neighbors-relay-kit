@@ -15,7 +15,8 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 
 
 > **Status.** This kit deploys a relay; it does not change client settings automatically.
-> Connecting to a custom relay requires an app build that supports custom-relay routing.
+> Connecting to a custom relay needs the app release that includes the relay page (chat settings → Internet → Relay);
+> as of 2026-10-21 it is in the app's main branch and not yet in a shipped build.
 > The repository and test releases remain private; see the publication status below.
 
 [Relay/client boundary audit and validation (2026-10-21)](docs/relay-client-audit-2026-10-21.md).
@@ -65,8 +66,9 @@ recorded: Caddy error/runtime logs, host/provider logs and operator changes are 
 ### Authentication
 
 NIP-42 AUTH remains **off by default** and is unchanged on both built-in relays. Test.4 includes `setup.sh --auth` for a fresh custom-relay installation.
-Wait for a compatible client release and clean-VPS validation before enabling it for users. The app now has internal custom-relay/NIP-42 support;
-the user-facing relay selector has not shipped.
+Wait for the app release with the relay page and for clean-VPS validation before enabling it for users. The app's main branch
+has the page: NIP-11 preflight of the exact address before saving, a warning about the limits below, AUTH status with an
+explicit retry, and removal of an address together with that network's data.
 
 With `--auth`, the wizard sets `enabled = true`, `serviceUrl = "wss://<domain>/relay"`,
 `restrictedReadKinds = "1059"` and `restrictReadToInvolvedPubkey = true` before starting strfry.
@@ -84,12 +86,12 @@ inbox keys; AUTH additionally proves ownership and links that key to the connect
 its IP address. Normal logging remains unchanged.
 
 **Custom relays support direct Internet delivery only: gateways and couriers are unavailable, with
-or without AUTH.** The app enforces this boundary; the future relay setting must show this warning.
+or without AUTH.** The app enforces this boundary; the relay page shows this warning before switching.
 Bluetooth and ordinary Bluetooth mesh remain available. No gateway delegation is implemented.
 See [the AUTH validation record](docs/custom-relay-auth-2026-10-21.md) and
 [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
-Before the selector can be released, the app also needs signed inbox-address exchange scoped to the selected network; the current custom mode suppresses legacy unscoped Bluetooth/group addresses. Internal delivery tests with known inboxes do not validate device discovery.
+The app exchanges signed inbox addresses scoped to the selected network over Bluetooth for contacts and groups; custom mode ignores legacy unscoped addresses. Neighbors reach each other over the Internet only when they picked the same relay. A physical-device run against a `--auth` relay is still pending.
 
 ### Event kinds
 
