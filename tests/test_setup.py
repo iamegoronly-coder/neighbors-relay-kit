@@ -289,7 +289,7 @@ class SetupTests(unittest.TestCase):
                  'DOMAIN=relay.example.org\nCONTACT=two words\n',     # unsafe contact
                  'DOMAIN=relay.example.org\nMODE=docker\n']           # bad mode
         for text in cases:
-            with self.subTest(text=text):
+            with self.subTest(text=text), patch.object(module.sys.stdin, 'isatty', return_value=False):
                 config = self.values(text)
                 code, _ = self.main(['--lang', 'en', '--config', config, '--binary', str(self.binary), '--sha256', self.sha, '--yes'])
                 self.assertEqual(code, 1)
@@ -297,6 +297,19 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertFalse((self.root / 'var/lib/neighbors-relay-setup').exists())
         self.assertFalse(any(c[0] == 'apt-get' for c in self.runner.calls))
+
+    def test_empty_domain_in_values_file_is_asked_once_in_a_terminal(self):
+        config = self.values('DOMAIN=\nAUTH=yes\nLANGUAGE=en\n')
+        answers = iter(['relay.example.org'])
+        self.runner.auth_supported = True
+        with patch.object(module.sys.stdin, 'isatty', return_value=True), \
+             patch('builtins.input', side_effect=lambda prompt='': next(answers)):
+            code, output = self.main(['--config', config, '--binary', str(self.binary), '--sha256', self.sha, '--yes'])
+        self.assertEqual(code, 0, output)
+        self.assertEqual(self.state()['domain'], 'relay.example.org')
+        self.assertIs(self.state()['auth'], True)
+        self.assertIn('wss://relay.example.org/relay', output)
+        self.assertEqual(next(answers, 'no more prompts'), 'no more prompts')
 
     def test_command_line_overrides_the_values_file(self):
         config = self.values('DOMAIN=file.example.org\nAUTH=no\nLANGUAGE=de\nNAME=File name\n')

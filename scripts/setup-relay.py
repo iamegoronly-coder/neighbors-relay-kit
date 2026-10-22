@@ -448,7 +448,8 @@ def main(argv=None):
         tls_timeout = args.tls_timeout if args.tls_timeout is not None else int(values.get('TLS_TIMEOUT') or 180)
         if not 1 <= tls_timeout <= 600:
             raise SetupError(tr('invalid_timeout'))
-        if args.config and not args.domain and not args.check:
+        # An empty DOMAIN in the values file is asked for interactively; without a terminal it is an error.
+        if args.config and not args.domain and not args.check and not sys.stdin.isatty():
             raise SetupError(tr('config_domain_missing', v0=args.config))
         if args.check:
             if args.plan or args.mode or args.binary or args.sha256 or args.yes:

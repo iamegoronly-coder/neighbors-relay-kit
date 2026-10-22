@@ -6,7 +6,8 @@ Dates are the day the tag was created. Validation records live in `docs/`.
 
 ## Unreleased
 
-Nothing yet.
+- `sudo sh install.sh` asks for the domain when `DOMAIN` in `install.conf` is empty and then
+  continues without other questions; without a terminal the empty value is still an error.
 
 ## v0.1.0-test.6 — 2026-10-22
 

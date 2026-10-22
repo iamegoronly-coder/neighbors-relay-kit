@@ -123,7 +123,7 @@ Use `--tls-timeout 600` to increase HTTPS waiting from 180 to 600 seconds.
 
 ## Values file
 
-Instead of answering the wizard, fill in `install.conf` next to `setup.sh` and run `sudo sh install.sh`. The keys: `DOMAIN` (required), `AUTH` (`yes` by default: only the app an envelope is addressed to can read it; `no` leaves reads public), `LANGUAGE` (`en`, `ru`, `de`), `NAME` and `CONTACT` (optional NIP-11 identity), `MODE` (`binary` or `source`) and `TLS_TIMEOUT`. The wrapper passes `--config install.conf --yes` to `setup.sh`; any further options win over the file. The preflight, the plan, the lock and the recovery rules are the same as for the wizard. The final summary names the relay address, the place in the app where it is entered, the meaning of the authentication setting, `--check` and the saved-state path; `--check` prints it again at any time.
+Instead of answering the wizard, fill in `install.conf` next to `setup.sh` and run `sudo sh install.sh`. With `DOMAIN` left empty the command asks for the domain and continues without other questions. The keys: `DOMAIN` (required), `AUTH` (`yes` by default: only the app an envelope is addressed to can read it; `no` leaves reads public), `LANGUAGE` (`en`, `ru`, `de`), `NAME` and `CONTACT` (optional NIP-11 identity), `MODE` (`binary` or `source`) and `TLS_TIMEOUT`. The wrapper passes `--config install.conf --yes` to `setup.sh`; any further options win over the file. The preflight, the plan, the lock and the recovery rules are the same as for the wizard. The final summary names the relay address, the place in the app where it is entered, the meaning of the authentication setting, `--check` and the saved-state path; `--check` prints it again at any time.
 
 ## Verification and recovery
 

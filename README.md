@@ -30,7 +30,7 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 ## Quick start
 
 1. A clean Ubuntu 24.04 x86_64 VPS, a domain with an A/AAAA record pointing at it, TCP 80 and 443 open, about 1 GiB RAM and 4 GiB free on `/var/lib`.
-2. The two commands under [Install](#install): download the pinned archive, verify its SHA-256, extract it and run `sudo sh setup.sh`. The wizard asks for language, domain and mode, shows a plan and, once confirmed, sets up Caddy, the relay and the timers. Prefer no questions? Fill in `install.conf` and run `sudo sh install.sh` instead.
+2. The two commands under [Install](#install): download the pinned archive, verify its SHA-256, extract it and run `sudo sh setup.sh`. The wizard asks for language, domain and mode, shows a plan and, once confirmed, sets up Caddy, the relay and the timers. Or run `sudo sh install.sh`: it asks only for the domain and installs with authentication on.
 3. At the end the wizard prints `wss://your-domain/relay`; that is the address users enter in the app as their own relay. Verify at any time with `sudo sh setup.sh --check`.
 
 Details, the non-interactive mode and recovery: [docs/quickstart.md](docs/quickstart.md). While the repository is private the download commands answer 404; a local archive installs the same way, see the quickstart.
@@ -208,7 +208,7 @@ Fill in `install.conf` in the extracted directory (at least `DOMAIN`; `AUTH=yes`
 sudo sh install.sh
 ```
 
-It runs the same preflight and plan as the wizard and installs without further questions. At the end it prints a summary: the relay address, where to enter it in the app, what the authentication setting means and how to check the relay later; `sudo sh setup.sh --check` repeats that summary. The file is parsed line by line as `KEY=VALUE`, never executed; `setup.sh --config install.conf` accepts command-line options that take precedence over it.
+If `DOMAIN` is empty, it asks for the domain first. It runs the same preflight and plan as the wizard and installs without further questions. At the end it prints a summary: the relay address, where to enter it in the app, what the authentication setting means and how to check the relay later; `sudo sh setup.sh --check` repeats that summary. The file is parsed line by line as `KEY=VALUE`, never executed; `setup.sh --config install.conf` accepts command-line options that take precedence over it.
 
 ### Clone and build from source
 
