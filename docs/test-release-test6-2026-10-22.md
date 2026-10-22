@@ -47,7 +47,18 @@ between two devices on the relay, ARM64, Debian, installation next to an existin
 
 ## Local validation of the packaged archive
 
-VALIDATION_PLACEHOLDER
+Source tag `v0.1.0-test.6` points to the "release: prepare test.6" commit; all 91 packaged repository
+files match that tag byte for byte, all payload hashes match the manifest, and no file outside
+`README*`, `docs/`, `CHANGELOG.md` and `release/` differs from the installed tree (`d49cfd5`).
+`tests/run-unit-tests.sh`: 75 unit tests and shell syntax PASS in the checkout and from the
+extracted archive. Container integration, the acceptance boundary and the app TLS stand were run
+on this same code for test.5 and are unchanged.
+
+Archive SHA-256:
+`c161fc34317a049622c4d54b1666f3dc2b13db35cf8b43f82d9dfb90efda33ed`.
+
+No existing archive or tag was replaced. All six main-branch README/quickstart commands pin
+this hash; immutable bundled instructions use the release-notes placeholder by design.
 
 ## Gates before users/public publication
 

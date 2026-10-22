@@ -59,7 +59,7 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_6_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.6.tar.gz' | sha256sum --check - &&
+  printf '%s  %s\n' 'c161fc34317a049622c4d54b1666f3dc2b13db35cf8b43f82d9dfb90efda33ed' 'neighbors-relay-v0.1.0-test.6.tar.gz' | sha256sum --check - &&
   tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
