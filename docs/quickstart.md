@@ -6,9 +6,9 @@
 is in `scripts/setup-relay.py`, `scripts/install.sh` and this kit's configuration files. Read them
 before running as root. Cloning makes inspection possible; it does not itself make code safe.
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.6` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.7` is a test release, not a production recommendation.
 
-**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.6 includes the 60 KiB event cap, indexed-only maintenance, a 180-second smoke-policy timeout and 26-hour retention of normal events. The test.6 contents were installed on a clean Ubuntu 24.04 VPS on 2026-10-22 with `install.conf` and `sudo sh install.sh` (binary mode, AUTH on); external hybrid TLS, NIP-11 and a physical-device connection passed, see the [record](test-release-test6-2026-10-22.md). Local container tests do not replace a real systemd/TLS installation. The app's relay page exists in its main branch and is not yet in a shipped build; AUTH is off by default. Test.6 includes optional `--auth`; it requires a compatible custom-relay client. See the README Authentication section.
+**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.6 includes the 60 KiB event cap, indexed-only maintenance, a 180-second smoke-policy timeout and 26-hour retention of normal events. The test.6 contents (test.7 adds only the domain prompt) were installed on a clean Ubuntu 24.04 VPS on 2026-10-22 with `install.conf` and `sudo sh install.sh` (binary mode, AUTH on); external hybrid TLS, NIP-11 and a physical-device connection passed, see the [record](test-release-test6-2026-10-22.md). Local container tests do not replace a real systemd/TLS installation. The app's relay page exists in its main branch and is not yet in a shipped build; AUTH is off by default. Test.6 includes optional `--auth`; it requires a compatible custom-relay client. See the README Authentication section.
 
 
 ## Language selection
@@ -33,7 +33,7 @@ its configuration merely to bypass this protection.
 
 ## Two commands after public release
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.6` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.7` is a test release, not a production recommendation.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -50,16 +50,16 @@ When logged in as root, omit `sudo`.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.6.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.6/neighbors-relay-v0.1.0-test.6.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.7.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.7/neighbors-relay-v0.1.0-test.7.tar.gz
 ```
 
 2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' 'c161fc34317a049622c4d54b1666f3dc2b13db35cf8b43f82d9dfb90efda33ed' 'neighbors-relay-v0.1.0-test.6.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_7_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.7.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
@@ -70,7 +70,7 @@ The wizard asks for language, domain and installation mode, then shows a plan fo
 After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
-git clone --branch v0.1.0-test.6 --single-branch \
+git clone --branch v0.1.0-test.7 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 
@@ -86,8 +86,8 @@ Copy the archive and its `.sha256` file to the VPS. Verify and extract into an e
 location, not over another checkout:
 
 ```sh
-sha256sum -c neighbors-relay-v0.1.0-test.6.tar.gz.sha256
-tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.7.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -168,7 +168,7 @@ operator updates; follow the [upgrade/rollback guide](caddy.md#upgrading).
 
 ## Create the local bundle
 
-On the preparation machine with `out/v0.1.0-test.6` and Python 3.11+:
+On the preparation machine with `out/v0.1.0-test.7` and Python 3.11+:
 
 ```sh
 python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz
