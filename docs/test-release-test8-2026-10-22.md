@@ -20,12 +20,20 @@ Canonical binary SHA-256:
 
 ## Local validation
 
-- `tests/run-unit-tests.sh`: 79 unit tests and shell syntax PASS in the checkout.
+- `tests/run-unit-tests.sh`: 79 unit tests and shell syntax PASS in both the checkout and
+  a separately extracted copy of the final archive.
 - The new language cases reproduced nine failing subcases before the fix; all six language
   tests now pass, including empty/omitted config values and mixed-case overrides.
 - Documentation links, candidate references, shared checksum placeholder and retention checks pass.
-- Extracted-archive checks and the final archive checksum are recorded on main after packaging;
-  the immutable tag and bundled instructions carry `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES`.
+- `install.sh --help` from the extracted archive selects Russian for `ru_RU.UTF-8`, German
+  for `de_DE.UTF-8` and English for `C.UTF-8` with the supplied empty `LANGUAGE=`.
+- All 93 packaged repository files match `v0.1.0-test.8` byte for byte; all six payload hashes
+  match `SHA256SUMS`. The binary and patch match the unchanged candidate manifest.
+- All six main-branch install documents pin the final archive hash. The immutable tag and
+  bundled instructions carry `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` by design.
+
+Archive SHA-256: `a4c3268886661ae2b5a44a8d4ee9499301bdff06acc4687effa42aa96cde1e5d`.
+Earlier archive hashes and tag object IDs were checked again and are unchanged.
 
 Two sandboxed staging runs reported exit 2 instead of 1 in the existing mock-OpenSSL
 unverified-certificate test. The isolated diagnostic run and the full checkout suite outside
