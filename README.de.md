@@ -20,7 +20,7 @@ Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-V
 ## Schnellstart
 
 1. Frischer VPS mit Ubuntu 24.04 x86_64, eine Domain mit A/AAAA-Eintrag darauf, offene TCP-Ports 80 und 443, etwa 1 GiB RAM und 4 GiB frei unter `/var/lib`.
-2. Die zwei Befehle aus [Installation](#installation): das festgelegte Archiv laden, SHA-256 prüfen, entpacken und `sudo sh setup.sh` starten. Der Assistent fragt Sprache, Domain und Modus, zeigt einen Plan und richtet nach Bestätigung Caddy, Relay und Timer ein.
+2. Die zwei Befehle aus [Installation](#installation): das festgelegte Archiv laden, SHA-256 prüfen, entpacken und `sudo sh setup.sh` starten. Der Assistent fragt Sprache, Domain und Modus, zeigt einen Plan und richtet nach Bestätigung Caddy, Relay und Timer ein. Ohne Rückfragen: `install.conf` ausfüllen und `sudo sh install.sh` starten.
 3. Am Ende gibt der Assistent `wss://ihre-domain/relay` aus; diese Adresse wird in der App als eigenes Relay eingetragen. Prüfung jederzeit: `sudo sh setup.sh --check`.
 
 Details, nicht interaktiver Modus und Wiederherstellung: [docs/quickstart.de.md](docs/quickstart.de.md). Solange das Repository privat ist, antworten die Download-Befehle mit 404; ein lokales Archiv wird genauso installiert, siehe Quickstart.
@@ -160,6 +160,16 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
 ```
 
 Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_5_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.5-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
+
+### Wertedatei statt Rückfragen
+
+Füllen Sie `install.conf` im entpackten Verzeichnis aus (mindestens `DOMAIN`; `AUTH=yes` ist Standard, `NAME` und `CONTACT` sind optionale NIP-11-Angaben) und führen Sie einen Befehl aus:
+
+```sh
+sudo sh install.sh
+```
+
+Es laufen dieselben Vorprüfungen und derselbe Plan wie im Assistenten, die Installation folgt ohne weitere Fragen. Am Ende erscheint eine Zusammenfassung: Relay-Adresse, wo sie in der App eingetragen wird, was die gewählte Authentifizierung bedeutet und wie das Relay später geprüft wird; `sudo sh setup.sh --check` wiederholt sie. Die Datei wird zeilenweise als `SCHLÜSSEL=WERT` gelesen und nie ausgeführt; `setup.sh --config install.conf` nimmt Kommandozeilenoptionen an, die Vorrang haben.
 
 ### Klonen und aus Quellen bauen
 

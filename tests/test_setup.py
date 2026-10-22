@@ -236,6 +236,88 @@ class SetupTests(unittest.TestCase):
         with patch.object(module, 'Setup', return_value=self.setup):
             self.assertEqual(module.main(['--check']), 0)
 
+    def values(self, text):
+        path = Path(self.temp.name) / 'install.conf'
+        path.write_text(text)
+        return str(path)
+
+    def main(self, args):
+        output = io.StringIO()
+        with patch.object(module, 'Setup', return_value=self.setup), contextlib.redirect_stdout(output):
+            code = module.main(args)
+        return code, output.getvalue()
+
+    def test_values_file_installs_without_questions_and_prints_the_summary(self):
+        self.runner.auth_supported = True
+        config = self.values('# relay\nDOMAIN = relay.example.org\nAUTH=yes\nLANGUAGE=en\nNAME="My relay"\n'
+                             'CONTACT=admin@example.org  # abuse\nTLS_TIMEOUT=5\n')
+        with patch.object(module.sys.stdin, 'isatty', return_value=False):
+            code, output = self.main(['--config', config, '--binary', str(self.binary), '--sha256', self.sha, '--yes'])
+        self.assertEqual(code, 0, output)
+        self.assertEqual(module.LANGUAGE, 'en')
+        relay = (self.root / 'etc/strfry/strfry.conf').read_text()
+        self.assertIn('name = "My relay"', relay)
+        self.assertIn('contact = "admin@example.org"', relay)
+        self.assertIn('        enabled = true', relay)
+        self.assertEqual(self.state()['phase'], 'complete')
+        self.assertIs(self.state()['auth'], True)
+        self.assertIn('Relay address for the app:  wss://relay.example.org/relay', output)
+        self.assertIn('Authentication: ON (NIP-42)', output)
+        self.assertIn('no password, login or list of allowed keys', output)
+        # --check repeats the same summary from the saved state.
+        code, output = self.main(['--check'])
+        self.assertEqual(code, 0)
+        self.assertIn('Authentication: ON (NIP-42)', output)
+        self.assertIn('sudo sh setup.sh --check', output)
+
+    def test_values_file_auth_off_keeps_public_configuration_and_default_identity(self):
+        config = self.values('DOMAIN=relay.example.org\nAUTH=no\nLANGUAGE=en\n')
+        code, output = self.main(['--config', config, '--binary', str(self.binary), '--sha256', self.sha, '--yes'])
+        self.assertEqual(code, 0, output)
+        relay = (self.root / 'etc/strfry/strfry.conf').read_text()
+        self.assertEqual(relay, (KIT / 'config/strfry.conf').read_text())
+        self.assertIs(self.state()['auth'], False)
+        self.assertIn('Authentication: OFF', output)
+
+    def test_values_file_errors_stop_before_any_change(self):
+        cases = ['DOMAIN=relay.example.org\nTOKEN=secret\n',          # unknown key
+                 'DOMAIN=relay.example.org\nAUTH=maybe\n',            # bad boolean
+                 'DOMAIN=\nAUTH=yes\n',                               # missing domain
+                 'DOMAIN=relay.example.org\nDOMAIN=other.example\n',  # duplicate
+                 'relay.example.org\n',                                 # not KEY=VALUE
+                 'DOMAIN=relay.example.org\nNAME=bad"quote\n',        # unsafe name
+                 'DOMAIN=relay.example.org\nCONTACT=two words\n',     # unsafe contact
+                 'DOMAIN=relay.example.org\nMODE=docker\n']           # bad mode
+        for text in cases:
+            with self.subTest(text=text):
+                config = self.values(text)
+                code, _ = self.main(['--lang', 'en', '--config', config, '--binary', str(self.binary), '--sha256', self.sha, '--yes'])
+                self.assertEqual(code, 1)
+        code, _ = self.main(['--lang', 'en', '--config', str(Path(self.temp.name) / 'absent.conf'), '--yes'])
+        self.assertEqual(code, 1)
+        self.assertFalse((self.root / 'var/lib/neighbors-relay-setup').exists())
+        self.assertFalse(any(c[0] == 'apt-get' for c in self.runner.calls))
+
+    def test_command_line_overrides_the_values_file(self):
+        config = self.values('DOMAIN=file.example.org\nAUTH=no\nLANGUAGE=de\nNAME=File name\n')
+        code, output = self.main(['--lang', 'en', '--config', config, '--domain', 'cli.example.org', '--auth',
+                                  '--name', 'CLI name', '--binary', str(self.binary), '--sha256', self.sha, '--plan'])
+        self.assertEqual(code, 0, output)
+        self.assertEqual(module.LANGUAGE, 'en')
+        self.assertIn('wss://cli.example.org/relay', output)
+        self.assertNotIn('file.example.org', output)
+        self.assertTrue(self.setup.auth)
+        self.assertEqual(self.setup.name, 'CLI name')
+        self.assertFalse((self.root / 'var/lib/neighbors-relay-setup').exists())
+
+    def test_install_wrapper_passes_the_values_file_and_yes(self):
+        wrapper = (KIT / 'install.sh').read_text()
+        self.assertIn('--config "$KIT/install.conf" --yes "$@"', wrapper)
+        template = module.read_values(KIT / 'install.conf')
+        self.assertEqual(template['DOMAIN'], '')
+        self.assertEqual(template['AUTH'], 'yes')
+        self.assertEqual(set(template) <= set(module.CONFIG_KEYS), True)
+
     def test_auth_plan_has_no_side_effects(self):
         args = ['--lang', 'en', '--domain', 'relay.example.org', '--binary', str(self.binary),
                 '--sha256', self.sha, '--auth', '--plan']

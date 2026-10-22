@@ -12,6 +12,10 @@ Dates are the day the tag was created. Validation records live in `docs/`.
 - Russian and German docs now link to their own heading anchors instead of the English ones.
 - Changelog, [release process](docs/release-process.md) and a quick-start block at the top of
   the three READMEs.
+- `install.conf` + `sudo sh install.sh`: fill in the values (domain, AUTH on by default, optional NIP-11
+  name and contact) and install without questions. The wizard gained `--config`, `--name` and
+  `--contact`, and both the install and `--check` end with a summary: relay address, where to enter
+  it in the app, what the authentication setting means.
 - READMEs and quickstarts describe the app's relay page (in the app's main branch since
   2026-10-21, not yet in a shipped build) instead of a planned selector.
 

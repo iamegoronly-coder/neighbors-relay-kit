@@ -20,6 +20,8 @@ import time
 KIT = Path(__file__).resolve().parents[1]
 GIB = 1024 ** 3
 UNITS = ['strfry.service', 'strfry-prune.timer', 'strfry-disk-guard.timer']
+CONFIG_KEYS = ('DOMAIN', 'AUTH', 'LANGUAGE', 'MODE', 'NAME', 'CONTACT', 'TLS_TIMEOUT')
+BOOLEANS = {'yes': True, 'true': True, 'on': True, '1': True, 'no': False, 'false': False, 'off': False, '0': False}
 RUNTIME = ['ca-certificates', 'curl', 'gnupg', 'debian-keyring', 'debian-archive-keyring',
            'apt-transport-https', 'python3', 'liblmdb0', 'libssl3t64',
            'zlib1g', 'libsecp256k1-1', 'libzstd1', 'libstdc++6']
@@ -47,7 +49,15 @@ def choose_language(argv):
     default = default if default in CATALOGS else 'en'
     early = argparse.ArgumentParser(add_help=False)
     early.add_argument('--lang', choices=tuple(CATALOGS))
+    early.add_argument('--config')
     choice, _ = early.parse_known_args(argv)
+    if choice.lang is None and choice.config:
+        # A LANGUAGE line in the values file; any problem with the file is reported by main().
+        try:
+            default = read_values(Path(choice.config)).get('LANGUAGE', default)
+        except (SetupError, OSError):
+            pass
+        default = default if default in CATALOGS else 'en'
     LANGUAGE = choice.lang or default
     if choice.lang is None and not argv and sys.stdin.isatty():
         answer = input('Language / Sprache / Язык [en/ru/de] (' + default + '): ').strip().lower()
@@ -58,6 +68,45 @@ def choose_language(argv):
 
 class SetupError(Exception):
     pass
+
+
+def read_values(path):
+    """Strict KEY=VALUE file; nothing is sourced or evaluated."""
+    if not path.is_file():
+        raise SetupError(tr('config_missing', v0=path))
+    values = {}
+    for number, raw in enumerate(path.read_text().splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith('#'):
+            continue
+        key, separator, value = line.partition('=')
+        key = key.strip()
+        if not separator or not re.fullmatch(r'[A-Z_]+', key):
+            raise SetupError(tr('config_invalid_line', v0=number))
+        if key not in CONFIG_KEYS:
+            raise SetupError(tr('config_unknown_key', v0=key))
+        if key in values:
+            raise SetupError(tr('config_duplicate_key', v0=key))
+        value = value.split(' #')[0].strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in '"\'':
+            value = value[1:-1].strip()
+        values[key] = value
+    for key, allowed in [('AUTH', BOOLEANS), ('LANGUAGE', CATALOGS), ('MODE', ('binary', 'source'))]:
+        if values.get(key, '') and values[key].lower() not in allowed:
+            raise SetupError(tr('config_invalid_value', v0=key, v1='/'.join(allowed if key != 'AUTH' else ('yes', 'no'))))
+    if values.get('TLS_TIMEOUT', '') and not values['TLS_TIMEOUT'].isdigit():
+        raise SetupError(tr('config_invalid_value', v0='TLS_TIMEOUT', v1='1..600'))
+    return values
+
+
+def relay_identity(name, contact):
+    """NIP-11 name/contact: printable, no quotes or backslashes so the config stays well formed."""
+    name, contact = (name or '').strip(), (contact or '').strip()
+    if name and not (len(name) <= 64 and name.isprintable() and not set(name) & set('"\\')):
+        raise SetupError(tr('invalid_name'))
+    if contact and not (len(contact) <= 200 and contact.isprintable() and not set(contact) & set('"\\ ')):
+        raise SetupError(tr('invalid_contact'))
+    return name, contact
 
 
 def domain_name(value):
@@ -92,6 +141,7 @@ class Setup:
         # root injection is for unit tests only; no CLI/env override exposes it to an installation.
         self.kit, self.root = Path(kit), Path(root)
         self.auth = False
+        self.name, self.contact = '', ''
         self.runner = runner or Runner()
         self.stage = tr('preparation')
         self.started = False
@@ -239,6 +289,12 @@ class Setup:
                 block = block.replace(old, new)
             config = config[:start] + block + config[end:]
             config = config.replace('No AUTH.', 'NIP-42: kind 1059 reads restricted to involved keys; writes remain public.')
+        for old, new in [('        name = "Neighbors-compatible relay"\n', f'        name = "{self.name}"\n'),
+                         ('        contact = ""\n', f'        contact = "{self.contact}"\n')]:
+            if config.count(old) != 1:
+                raise SetupError(tr('auth_template_mismatch'))
+            if new.split('"')[1]:
+                config = config.replace(old, new)
         return config
 
     def configure_caddy(self, domain, work):
@@ -348,6 +404,7 @@ class Setup:
                 if metrics.stdout.strip() != '404':
                     raise SetupError(tr('metrics_exposed'))
                 print(tr('ready', v0=domain, v1=domain), flush=True)
+                print(tr('summary', v0=domain, v1=tr('summary_auth_on') if self.auth else tr('summary_auth_off')), flush=True)
                 return
             last_error = info.stderr.strip()
             if time.monotonic() >= deadline:
@@ -361,7 +418,10 @@ def parser():
     result._optionals.title = tr('options_title')
     result.add_argument('-h', '--help', action='help', help=tr('help_help'))
     result.add_argument('--lang', choices=('en', 'ru', 'de'), help=tr('language_help'))
+    result.add_argument('--config', help=tr('config_help'))
     result.add_argument('--domain', help=tr('domain_help'))
+    result.add_argument('--name', help=tr('name_help'))
+    result.add_argument('--contact', help=tr('contact_help'))
     result.add_argument('--mode', choices=('binary', 'source'), help=tr('mode_help'))
     result.add_argument('--binary', help=tr('binary_help'))
     result.add_argument('--sha256', help=tr('checksum_help'))
@@ -369,7 +429,7 @@ def parser():
     result.add_argument('--yes', action='store_true', help=tr('yes_help'))
     result.add_argument('--check', action='store_true', help=tr('check_help'))
     result.add_argument('--auth', action='store_true', help=tr('auth_help'))
-    result.add_argument('--tls-timeout', type=int, default=180, help=tr('timeout_help'))
+    result.add_argument('--tls-timeout', type=int, help=tr('timeout_help'))
     return result
 
 
@@ -379,9 +439,17 @@ def main(argv=None):
         choose_language(list(sys.argv[1:] if argv is None else argv))
         setup.stage = tr('preparation')
         args = parser().parse_args(argv)
-        setup.auth = args.auth
-        if not 1 <= args.tls_timeout <= 600:
+        values = read_values(Path(args.config)) if args.config else {}
+        # Command-line options take precedence over the values file.
+        setup.auth = args.auth or BOOLEANS.get(values.get('AUTH', '').lower(), False)
+        setup.name, setup.contact = relay_identity(args.name or values.get('NAME'), args.contact or values.get('CONTACT'))
+        args.domain = args.domain or values.get('DOMAIN') or None
+        args.mode = args.mode or values.get('MODE', '').lower() or None
+        tls_timeout = args.tls_timeout if args.tls_timeout is not None else int(values.get('TLS_TIMEOUT') or 180)
+        if not 1 <= tls_timeout <= 600:
             raise SetupError(tr('invalid_timeout'))
+        if args.config and not args.domain and not args.check:
+            raise SetupError(tr('config_domain_missing', v0=args.config))
         if args.check:
             if args.plan or args.mode or args.binary or args.sha256 or args.yes:
                 raise SetupError(tr('check_conflict'))
@@ -392,7 +460,7 @@ def main(argv=None):
                 raise SetupError(tr('domain_required'))
             if state.get('domain') == domain_name(domain):
                 setup.auth = args.auth or state.get('auth', False) is True
-            setup.check(domain_name(domain), args.tls_timeout)
+            setup.check(domain_name(domain), tls_timeout)
             return 0
         interactive = sys.stdin.isatty()
         domain = args.domain
@@ -428,7 +496,7 @@ def main(argv=None):
             except BlockingIOError as error:
                 raise SetupError(tr('already_running')) from error
             setup.preflight(mode, domain)  # Recheck after confirmation and lock acquisition.
-            setup.install(mode, domain, binary, expected, args.tls_timeout)
+            setup.install(mode, domain, binary, expected, tls_timeout)
         return 0
     except (SetupError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print(tr('stopped', v0=setup.stage, v1=error), file=sys.stderr)

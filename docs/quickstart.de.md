@@ -103,6 +103,10 @@ sudo sh setup.sh --mode binary --domain relay.example.org \
 `EXPECTED_SHA256` vorher aus einem geprüften Build oder authentifizierten Release-Nachweis beziehen. Nach Prüfung des Plans kann eine Automatisierung `--yes` verwenden; sonst schlägt die nichtinteraktive Installation fehl. `--tls-timeout 600` verlängert die HTTPS-Wartezeit von 180 auf 600 Sekunden.
 
 
+## Wertedatei
+
+Statt die Fragen des Assistenten zu beantworten, füllen Sie `install.conf` neben `setup.sh` aus und starten `sudo sh install.sh`. Die Schlüssel: `DOMAIN` (Pflicht), `AUTH` (`yes` als Standard: nur die adressierte App kann einen Umschlag lesen; `no` lässt das Lesen öffentlich), `LANGUAGE` (`en`, `ru`, `de`), `NAME` und `CONTACT` (optionale NIP-11-Angaben), `MODE` (`binary` oder `source`) und `TLS_TIMEOUT`. Der Wrapper übergibt `--config install.conf --yes` an `setup.sh`; weitere Optionen haben Vorrang vor der Datei. Vorprüfung, Plan, Sperre und Wiederherstellungsregeln sind dieselben wie beim Assistenten. Die Zusammenfassung am Ende nennt die Relay-Adresse, die Stelle in der App, die Bedeutung der Authentifizierung, `--check` und den Pfad des gespeicherten Zustands; `--check` gibt sie jederzeit erneut aus.
+
 ## Prüfung und Wiederherstellung
 
 Installiertes Relay ohne Änderungen prüfen:

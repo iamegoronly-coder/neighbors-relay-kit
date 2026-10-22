@@ -28,7 +28,7 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 ## Quick start
 
 1. A clean Ubuntu 24.04 x86_64 VPS, a domain with an A/AAAA record pointing at it, TCP 80 and 443 open, about 1 GiB RAM and 4 GiB free on `/var/lib`.
-2. The two commands under [Install](#install): download the pinned archive, verify its SHA-256, extract it and run `sudo sh setup.sh`. The wizard asks for language, domain and mode, shows a plan and, once confirmed, sets up Caddy, the relay and the timers.
+2. The two commands under [Install](#install): download the pinned archive, verify its SHA-256, extract it and run `sudo sh setup.sh`. The wizard asks for language, domain and mode, shows a plan and, once confirmed, sets up Caddy, the relay and the timers. Prefer no questions? Fill in `install.conf` and run `sudo sh install.sh` instead.
 3. At the end the wizard prints `wss://your-domain/relay`; that is the address users enter in the app as their own relay. Verify at any time with `sudo sh setup.sh --check`.
 
 Details, the non-interactive mode and recovery: [docs/quickstart.md](docs/quickstart.md). While the repository is private the download commands answer 404; a local archive installs the same way, see the quickstart.
@@ -197,6 +197,16 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
 ```
 
 The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_5_RELEASE_NOTES` with the archive SHA-256 from the test.5 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
+
+### Values file instead of questions
+
+Fill in `install.conf` in the extracted directory (at least `DOMAIN`; `AUTH=yes` is the default, `NAME` and `CONTACT` are optional NIP-11 identity) and run one command:
+
+```sh
+sudo sh install.sh
+```
+
+It runs the same preflight and plan as the wizard and installs without further questions. At the end it prints a summary: the relay address, where to enter it in the app, what the authentication setting means and how to check the relay later; `sudo sh setup.sh --check` repeats that summary. The file is parsed line by line as `KEY=VALUE`, never executed; `setup.sh --config install.conf` accepts command-line options that take precedence over it.
 
 ### Clone and build from source
 

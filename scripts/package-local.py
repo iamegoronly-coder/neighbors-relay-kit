@@ -10,7 +10,7 @@ import tempfile
 
 KIT = Path(__file__).resolve().parents[1]
 ASSETS = {'strfry', 'source.tar.gz', 'build-info.txt', 'packages.lock', 'strfry-neighbors.patch', 'COPYING'}
-TOP_LEVEL = {'README.md', 'README.ru.md', 'README.de.md', 'CHANGELOG.md', 'LICENSE', 'LICENSES', 'SECURITY.md', 'SECURITY.ru.md', 'SECURITY.de.md', 'setup.sh',
+TOP_LEVEL = {'README.md', 'README.ru.md', 'README.de.md', 'CHANGELOG.md', 'LICENSE', 'install.sh', 'install.conf', 'LICENSES', 'SECURITY.md', 'SECURITY.ru.md', 'SECURITY.de.md', 'setup.sh',
              '.gitignore', '.dockerignore', 'bin', 'build', 'config', 'docs', 'patch', 'release',
              'scripts', 'systemd', 'tests'}
 

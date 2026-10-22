@@ -19,4 +19,5 @@ for script in bin/require-pq-caddy bin/strfry-prune-stamp scripts/*.sh tests/fak
     sh -n "$script"
 done
 sh -n setup.sh
+sh -n install.sh
 echo "PASS shell syntax"
