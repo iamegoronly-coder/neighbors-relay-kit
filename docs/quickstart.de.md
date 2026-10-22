@@ -4,14 +4,16 @@
 
 `setup.sh` installiert Abhängigkeiten, Caddy, Relay und Timer und prüft HTTPS. Die Umsetzung steht in `scripts/setup-relay.py`, `scripts/install.sh` und den Konfigurationsdateien. Prüfen Sie diese vor der Ausführung als root. Klonen ermöglicht eine Prüfung, garantiert aber keine Sicherheit.
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.7` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.8` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
-**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.6 enthält die Ereignisgrenze von 60 KiB, die ausschließlich altersindizierte Wartung, ein 180-Sekunden-Limit für den Policy-Smoke-Test und 26 Stunden Aufbewahrung normaler Ereignisse. Der Inhalt von test.6 (test.7 ergänzt nur die Domain-Abfrage) wurde am 22. Oktober 2026 über `install.conf` und `sudo sh install.sh` auf einem frischen Ubuntu-24.04-VPS installiert (Binärmodus, AUTH ein); externes hybrides TLS, NIP-11 und eine Verbindung von einem Gerät waren erfolgreich, siehe [Protokoll (EN)](test-release-test6-2026-10-22.md). Lokale Containertests ersetzen keine echte systemd/TLS-Installation. Die Relay-Seite der App liegt im main-Zweig und ist noch in keiner veröffentlichten Version; AUTH bleibt standardmäßig aus. Test.6 enthält optionales `--auth` und benötigt dafür einen kompatiblen Client; siehe Authentifizierung im README.
+**Prüfung:** der Inhalt von test.6 wurde am 22. Oktober 2026 auf einem frischen Ubuntu-24.04-x86_64-VPS mit `install.conf` und `sudo sh install.sh` installiert (Binärmodus, AUTH ein). Externe Prüfungen von Hybrid-TLS und NIP-11 waren erfolgreich; der Projektbetreiber bestätigte eine Verbindung von einem physischen iPhone. Siehe [Protokoll (EN)](test-release-test6-2026-10-22.md). Test.7 ergänzte die Domain-Abfrage; [test.8 (EN)](test-release-test8-2026-10-22.md) korrigiert die Sprachauswahl und präzisiert diese Anleitung. Diese Änderungen wurden nicht erneut auf einem VPS ausgeführt. Ausstehend sind Nachrichtenaustausch zwischen zwei Geräten, Quellcodeinstallation, Neustart-/Health-/Timer-Prüfungen und externer Smoke-Test mit Bereinigung. Lokale Containertests ersetzen diese Prüfungen nicht. Die Relay-Seite ist in main der App, aber noch nicht in einer veröffentlichten Version; vor einer Empfehlung von AUTH-Relays muss die kompatible App erscheinen.
+
+**AUTH-Standardwerte:** einfaches `sudo sh setup.sh` ohne `--config` lässt AUTH aus; `sudo sh setup.sh --auth` schaltet es ein. `sudo sh install.sh` liest `install.conf` mit **`AUTH=yes` als Standard**; `AUTH=no` in dieser Datei erlaubt öffentliches Lesen. Ein ausdrückliches `--auth` aktiviert AUTH auch bei no in der Datei. Die eingebauten Relays bleiben unverändert.
 
 
 ## Sprachauswahl
 
-Bei `sudo sh setup.sh` fragt der interaktive Assistent zuerst nach der Sprache. Sonst gelten `LC_ALL`, `LC_MESSAGES`, dann `LANG`, mit Englisch als Rückfall. Explizite Auswahl: `sudo sh setup.sh --lang de` (oder `en` / `ru`); gilt auch für `--help`, `--plan` und `--check`. Systemwerkzeuge für Pakete und Builds können eigene Meldungen ausgeben.
+Bei `sudo sh setup.sh` fragt der interaktive Assistent zuerst nach der Sprache. Für `install.sh` oder `setup.sh --config <Datei>` gilt die Reihenfolge: `--lang` → nicht leeres `LANGUAGE` in der Datei → Prozess-Locale (`LC_ALL`, dann `LC_MESSAGES`, dann `LANG`) → Englisch bei fehlender oder nicht unterstützter Locale. Ein leeres oder fehlendes `LANGUAGE` behält die Locale bei; die Dateiwerte `en`, `ru`, `de` sind unabhängig von Groß-/Kleinschreibung. Explizite Auswahl: `sudo sh install.sh --lang de` oder `sudo sh setup.sh --lang de` (auch `en` / `ru`); bei `setup.sh` gilt dies auch für `--help`, `--plan` und `--check`. Systemwerkzeuge für Pakete und Builds können eigene Meldungen ausgeben.
 
 ## Voraussetzungen
 
@@ -25,7 +27,7 @@ Der Assistent zeigt DNS-Adressen, beweist aber nicht, dass sie diesem VPS gehör
 
 ## Zwei Befehle nach öffentlicher Veröffentlichung
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.7` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.8` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
 Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
 
@@ -42,16 +44,16 @@ Bei Anmeldung als root kann `sudo` entfallen.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.7.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.7/neighbors-relay-v0.1.0-test.7.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.8.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.8/neighbors-relay-v0.1.0-test.8.tar.gz
 ```
 
 2. In derselben SSH-Sitzung die festgelegte Prüfsumme prüfen, dann entpacken und den Assistenten starten:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' 'b8a6e05a86800f29c4224f027ffd3b85e5f566204f372ec864ef839899f7e2ad' 'neighbors-relay-v0.1.0-test.7.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_8_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.8.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.8.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
@@ -62,7 +64,7 @@ Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Pl
 Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
 
 ```sh
-git clone --branch v0.1.0-test.7 --single-branch \
+git clone --branch v0.1.0-test.8 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 
@@ -77,8 +79,8 @@ Der Quellmodus lädt festgelegte Quellen und kompiliert das Relay, statt eine fe
 Archiv und `.sha256` auf den VPS kopieren, prüfen und in ein leeres Arbeitsverzeichnis entpacken, nicht über einen vorhandenen Checkout:
 
 ```sh
-sha256sum -c neighbors-relay-v0.1.0-test.7.tar.gz.sha256
-tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.8.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.8.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -105,7 +107,7 @@ sudo sh setup.sh --mode binary --domain relay.example.org \
 
 ## Wertedatei
 
-Statt die Fragen des Assistenten zu beantworten, füllen Sie `install.conf` neben `setup.sh` aus und starten `sudo sh install.sh`. Bleibt `DOMAIN` leer, fragt der Befehl nach der Domain und fährt ohne weitere Fragen fort. Die Schlüssel: `DOMAIN` (Pflicht), `AUTH` (`yes` als Standard: nur die adressierte App kann einen Umschlag lesen; `no` lässt das Lesen öffentlich), `LANGUAGE` (`en`, `ru`, `de`), `NAME` und `CONTACT` (optionale NIP-11-Angaben), `MODE` (`binary` oder `source`) und `TLS_TIMEOUT`. Der Wrapper übergibt `--config install.conf --yes` an `setup.sh`; weitere Optionen haben Vorrang vor der Datei. Vorprüfung, Plan, Sperre und Wiederherstellungsregeln sind dieselben wie beim Assistenten. Die Zusammenfassung am Ende nennt die Relay-Adresse, die Stelle in der App, die Bedeutung der Authentifizierung, `--check` und den Pfad des gespeicherten Zustands; `--check` gibt sie jederzeit erneut aus.
+Statt die Fragen des Assistenten zu beantworten, füllen Sie `install.conf` neben `setup.sh` aus und starten `sudo sh install.sh`. Bleibt `DOMAIN` leer, fragt der Befehl nach der Domain und fährt ohne weitere Fragen fort. Die Schlüssel: `DOMAIN` (Pflicht), `AUTH` (`yes` als Standard: Lesen von kind 1059 erfordert den Nachweis des Empfänger- oder äußeren Autorenschlüssels; `no` lässt das Lesen öffentlich), `LANGUAGE` (`en`, `ru`, `de`), `NAME` und `CONTACT` (optionale NIP-11-Angaben), `MODE` (`binary` oder `source`) und `TLS_TIMEOUT`. Der Wrapper übergibt `--config install.conf --yes` an `setup.sh`; weitere Optionen haben Vorrang vor der Datei. Vorprüfung, Plan, Sperre und Wiederherstellungsregeln sind dieselben wie beim Assistenten. Die Zusammenfassung am Ende nennt die Relay-Adresse, die Stelle in der App, die Bedeutung der Authentifizierung, `--check` und den Pfad des gespeicherten Zustands; `--check` gibt sie jederzeit erneut aus.
 
 ## Prüfung und Wiederherstellung
 
@@ -139,7 +141,7 @@ Die Installation ändert weder SSH, Firewall noch DNS, legt keinen Swap an und s
 
 ## Lokales Paket erstellen
 
-Auf dem Vorbereitungsrechner mit `out/v0.1.0-test.7` und Python 3.11+:
+Auf dem Vorbereitungsrechner mit `out/v0.1.0-test.8` und Python 3.11+:
 
 ```sh
 python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz

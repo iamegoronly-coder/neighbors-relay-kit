@@ -7,10 +7,7 @@ Deployment kit for a public [Nostr](https://github.com/nostr-protocol/nips) rela
 Caddy, with a short retention window, hard resource limits and post-quantum TLS. The website
 served by our own hosts is not included. The 2026-10-21 updates reduce event size to 60 KiB, remove the redundant full-database
 maintenance scan and shorten normal-event retention to 26 h; both built-in relays use the first
-two fixes and keep 48 h. The new test candidate is `v0.1.0-test.7`; it adds only the domain prompt of `install.sh` to
-test.6, whose contents were installed on a clean
-Ubuntu 24.04 x86_64 VPS on 2026-10-22 from `install.conf` with AUTH on, and the companion app
-connected from a physical iPhone. Earlier test tags/archives are retained unchanged.
+two fixes and keep 48 h. The new test candidate is `v0.1.0-test.8`; it fixes installer language selection and clarifies AUTH defaults and validation status. The test.6 contents were installed on a clean Ubuntu 24.04 x86_64 VPS on 2026-10-22 from `install.conf` with AUTH on; the maintainer reported a connection from one physical iPhone. Test.7 added the domain prompt. Test.8 has not been re-run on a VPS; the two-device exchange remains pending. Earlier test tags/archives are retained unchanged.
 
 First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Debian and automatic installation alongside an existing Caddy are separate follow-up stages; use the manual deployment guide for an existing server.
 
@@ -21,6 +18,8 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 > The repository and test releases remain private; see the publication status below.
 
 [Relay/client boundary audit and validation (2026-10-21)](docs/relay-client-audit-2026-10-21.md).
+
+[Test.8 candidate: installer language and publication preparation](docs/test-release-test8-2026-10-22.md).
 
 [Test.7 candidate: domain prompt](docs/test-release-test7-2026-10-22.md) · [Test.6 candidate: values-file installer and the clean-VPS installation](docs/test-release-test6-2026-10-22.md).
 
@@ -68,10 +67,13 @@ recorded: Caddy error/runtime logs, host/provider logs and operator changes are 
 
 ### Authentication
 
-NIP-42 AUTH remains **off by default** and is unchanged on both built-in relays. Test.4 includes `setup.sh --auth` for a fresh custom-relay installation.
-Wait for the app release with the relay page before enabling it for users; a clean-VPS installation with AUTH on and a physical-device connection succeeded on 2026-10-22. The app's main branch
-has the page: NIP-11 preflight of the exact address before saving, a warning about the limits below, AUTH status with an
-explicit retry, and removal of an address together with that network's data.
+The NIP-42 AUTH default depends on the installation entry point:
+
+- `sudo sh setup.sh` without `--config` leaves AUTH **off**; add `--auth` to enable it.
+- `sudo sh install.sh` reads the supplied `install.conf`, whose default is **`AUTH=yes`**. Set `AUTH=no` in that file for public reads, or use `setup.sh --config <file>` with your chosen value. An explicit `--auth` enables AUTH even if the file says `AUTH=no`.
+- Both built-in relays keep AUTH off; this kit does not change them.
+
+Wait for the app release with the relay page before recommending AUTH relays to users. The page is in the app's main branch: exact-address NIP-11 preflight before saving, warnings about the limits below, AUTH status with an explicit retry, and removal of an address together with that network's data.
 
 With `--auth`, the wizard sets `enabled = true`, `serviceUrl = "wss://<domain>/relay"`,
 `restrictedReadKinds = "1059"` and `restrictReadToInvolvedPubkey = true` before starting strfry.
@@ -94,7 +96,7 @@ Bluetooth and ordinary Bluetooth mesh remain available. No gateway delegation is
 See [the AUTH validation record](docs/custom-relay-auth-2026-10-21.md) and
 [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
-The app exchanges signed inbox addresses scoped to the selected network over Bluetooth for contacts and groups; custom mode ignores legacy unscoped addresses. Neighbors reach each other over the Internet only when they picked the same relay. A physical-device run against a `--auth` relay is still pending.
+The app exchanges signed inbox addresses scoped to the selected network over Bluetooth for contacts and groups; custom mode ignores legacy unscoped addresses. Neighbors reach each other over the Internet only when they picked the same relay. A connection from one physical iPhone to an AUTH relay was reported on 2026-10-22; exchanging messages between two physical devices on that relay remains pending.
 
 ### Event kinds
 
@@ -115,7 +117,7 @@ The app exchanges signed inbox addresses scoped to the selected network over Blu
 - **NIP-40 `expiration`:** already-expired events are rejected; expired events are filtered at read
   time (patched strfry) and physically removed by the internal expiration-index cron.
   The external 2-minute job only runs `delete --age 93600`; its success stamp monitors age maintenance, not the internal cron.
-- **NIP-42 AUTH off by default.** Optional restricted reads for custom relays in the current source tree; see Authentication above. Writes and resource limits remain unchanged.
+- **NIP-42 AUTH:** off with plain `setup.sh`, on with the supplied `install.sh` / `AUTH=yes`. See Authentication above for explicit selection. Writes and resource limits remain unchanged.
 
 | Limit | Mechanism |
 |---|---|
@@ -169,7 +171,7 @@ Two clean local canonical builds matched byte-for-byte; see the
 
 ## Install
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.7` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.8` is a test release, not a production recommendation.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -186,20 +188,20 @@ When logged in as root, omit `sudo`.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.7.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.7/neighbors-relay-v0.1.0-test.7.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.8.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.8/neighbors-relay-v0.1.0-test.8.tar.gz
 ```
 
 2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' 'b8a6e05a86800f29c4224f027ffd3b85e5f566204f372ec864ef839899f7e2ad' 'neighbors-relay-v0.1.0-test.7.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_8_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.8.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.8.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_7_RELEASE_NOTES` with the archive SHA-256 from the test.7 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` with the archive SHA-256 from the test.8 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
 
 ### Values file instead of questions
 
@@ -216,7 +218,7 @@ If `DOMAIN` is empty, it asks for the domain first. It runs the same preflight a
 After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
-git clone --branch v0.1.0-test.7 --single-branch \
+git clone --branch v0.1.0-test.8 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 

@@ -8,6 +8,17 @@ Dates are the day the tag was created. Validation records live in `docs/`.
 
 Nothing yet.
 
+## v0.1.0-test.8 — 2026-10-22
+
+- Empty or missing `LANGUAGE` in `install.conf` preserves the system locale. Explicit file
+  values are case-insensitive; `--lang` still takes precedence. Regression tests cover locale
+  priority, unsupported/missing locales, empty/omitted values and mixed-case overrides.
+- English, Russian and German instructions distinguish AUTH-off `setup.sh` from AUTH-on
+  `install.sh`, explain explicit selection and the language priority, and separate the reported
+  one-iPhone connection from the pending two-device message exchange.
+- New private candidate; previous tags and archives remain unchanged. Relay policy, binary,
+  patch and toolchain are unchanged. [Record](docs/test-release-test8-2026-10-22.md).
+
 ## v0.1.0-test.7 — 2026-10-22
 
 - `sudo sh install.sh` asks for the domain when `DOMAIN` in `install.conf` is empty and then

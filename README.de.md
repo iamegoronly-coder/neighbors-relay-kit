@@ -2,7 +2,7 @@
 
 [English](README.md) · [Русский](README.ru.md) · [Deutsch](README.de.md)
 
-Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in Home Bills. Es basiert auf unseren eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Unsere Website ist nicht enthalten. Die Updates vom 21. Oktober 2026 senken die Ereignisgrenze auf 60 KiB, entfernen den redundanten vollständigen Datenbankscan und verkürzen die Aufbewahrung normaler Ereignisse auf 26 Stunden; beide eingebauten Relays verwenden die ersten beiden Korrekturen und behalten 48 Stunden. Der neue Testkandidat heißt `v0.1.0-test.7`; er fügt test.6 nur die Domain-Abfrage von `install.sh` hinzu, und der Inhalt von test.6 wurde am 22. Oktober 2026 über `install.conf` mit eingeschaltetem AUTH auf einem frischen Ubuntu-24.04-x86_64-VPS installiert, und die App hat sich von einem physischen iPhone verbunden. Frühere Tags und Archive bleiben unverändert.
+Installationspaket für das öffentliche [Nostr](https://github.com/nostr-protocol/nips)-Relay von **Neighbors**, dem privaten Chat in Home Bills. Es basiert auf unseren eingebauten Relays: [strfry](https://github.com/hoytech/strfry) hinter Caddy, kurze Aufbewahrung, feste Ressourcengrenzen und postquantenfestes TLS. Unsere Website ist nicht enthalten. Die Updates vom 21. Oktober 2026 senken die Ereignisgrenze auf 60 KiB, entfernen den redundanten vollständigen Datenbankscan und verkürzen die Aufbewahrung normaler Ereignisse auf 26 Stunden; beide eingebauten Relays verwenden die ersten beiden Korrekturen und behalten 48 Stunden. Der neue Testkandidat heißt `v0.1.0-test.8`; er korrigiert die Sprachauswahl des Installers und präzisiert AUTH-Standardwerte und Prüfstatus. Der Inhalt von test.6 wurde am 22. Oktober 2026 über `install.conf` mit AUTH auf einem frischen Ubuntu-24.04-x86_64-VPS installiert; der Projektbetreiber bestätigte eine Verbindung von einem physischen iPhone. Test.7 ergänzte die Domain-Abfrage. Test.8 wurde nicht erneut auf einem VPS ausgeführt; der Nachrichtenaustausch zwischen zwei Geräten steht noch aus. Frühere Tags und Archive bleiben unverändert.
 
 Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-VPS**. ARM64, Debian und die automatische Installation neben vorhandenem Caddy folgen separat; für vorhandene Server gilt die manuelle Anleitung.
 
@@ -12,6 +12,8 @@ Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-V
 > Repository und Test-Releases bleiben privat; Veröffentlichungsstatus siehe unten.
 
 [Relay-/Client-Grenzen und Prüfergebnisse (2026-10-21, EN)](docs/relay-client-audit-2026-10-21.md).
+
+[Test.8: Installersprache und Veröffentlichungsvorbereitung (EN)](docs/test-release-test8-2026-10-22.md).
 
 [Kandidat test.7: Domain-Abfrage (EN)](docs/test-release-test7-2026-10-22.md) · [Kandidat test.6: Installation per Wertedatei und auf einem frischen VPS (EN)](docs/test-release-test6-2026-10-22.md).
 
@@ -52,11 +54,13 @@ Betreiberänderungen sind davon getrennt.
 
 ### Authentifizierung
 
-NIP-42 AUTH bleibt **standardmäßig ausgeschaltet**; beide eingebauten Relays bleiben unverändert.
-Test.4 enthält `setup.sh --auth` für eine neue Installation eines eigenen Relays. Vor der Aktivierung
-für Nutzer ist die App-Version mit der Relay-Seite erforderlich; eine Installation auf einem frischen VPS mit AUTH und eine Verbindung von einem Gerät sind am 22. Oktober 2026 gelungen. Im main-Zweig
-der App ist die Seite vorhanden: NIP-11-Prüfung der exakten Adresse vor dem Speichern, Hinweis auf die Grenzen unten,
-AUTH-Status mit ausdrücklicher Wiederholung und Entfernen einer Adresse samt Daten dieses Netzes.
+Der Standardwert für NIP-42 AUTH hängt vom Installationsweg ab:
+
+- `sudo sh setup.sh` ohne `--config` lässt AUTH **ausgeschaltet**; `--auth` schaltet es ein.
+- `sudo sh install.sh` liest die mitgelieferte `install.conf` mit dem Standard **`AUTH=yes`**. Für öffentliches Lesen setzen Sie darin `AUTH=no` oder verwenden `setup.sh --config <Datei>` mit dem gewünschten Wert. Ein ausdrückliches `--auth` aktiviert AUTH auch bei `AUTH=no` in der Datei.
+- Auf beiden eingebauten Relays bleibt AUTH ausgeschaltet; dieses Kit ändert sie nicht.
+
+Bevor AUTH-Relays Nutzern empfohlen werden, muss die App-Version mit der Relay-Seite veröffentlicht sein. Im main-Zweig ist die Seite vorhanden: NIP-11-Prüfung der exakten Adresse vor dem Speichern, Hinweise auf die Grenzen unten, AUTH-Status mit ausdrücklicher Wiederholung und Entfernen einer Adresse samt Daten dieses Netzes.
 
 Mit `--auth` setzt der Assistent vor dem Start von strfry `enabled = true`,
 `serviceUrl = "wss://<domain>/relay"`, `restrictedReadKinds = "1059"` und
@@ -80,7 +84,7 @@ hin. Bluetooth und gewöhnliche Bluetooth-Mesh-Zustellung bleiben verfügbar. Ei
 an Gateways ist nicht implementiert. Siehe [AUTH-Prüfprotokoll](docs/custom-relay-auth-2026-10-21.md)
 und [NIP-42](https://github.com/nostr-protocol/nips/blob/master/42.md).
 
-Die App tauscht signierte, an das gewählte Netz gebundene Inbox-Adressen für Kontakte und Gruppen über Bluetooth aus; eigene Netze ignorieren ältere ungebundene Adressen. Nachbarn erreichen sich über das Internet nur mit demselben Relay. Ein Test auf echten Geräten gegen ein `--auth`-Relay steht noch aus.
+Die App tauscht signierte, an das gewählte Netz gebundene Inbox-Adressen für Kontakte und Gruppen über Bluetooth aus; eigene Netze ignorieren ältere ungebundene Adressen. Nachbarn erreichen sich über das Internet nur mit demselben Relay. Der Projektbetreiber bestätigte am 22. Oktober 2026 eine Verbindung von einem physischen iPhone zu einem AUTH-Relay; der Nachrichtenaustausch zwischen zwei physischen Geräten auf diesem Relay steht noch aus.
 
 ### Ereignistypen
 
@@ -95,7 +99,7 @@ Die App tauscht signierte, an das gewählte Netz gebundene Inbox-Adressen für K
 - **Verlauf:** normale Ereignisse werden angenommen, wenn `created_at` höchstens 26 Stunden alt und höchstens 20 Minuten in der Zukunft liegt. Bereitstellung und Aufbewahrung bis `created_at + 26 h`, Bereinigung alle 2 Minuten. Die App fragt Umschläge aus etwa den letzten 24 Stunden ab; 26 Stunden sind Spielraum, kein Zustellversprechen: ein länger als einen Tag ausgeschaltetes Gerät verpasst Nachrichten auf jedem Relay.
 - **Kurzlebige Kinds 20000–29999:** Annahme innerhalb ±60 Sekunden zur Relay-Uhr; 90 Sekunden ab `created_at`, interner Ablaufindex-Cron etwa alle 9 Sekunden (normalerweise 90–99 Sekunden bei aktueller Datierung, mit erlaubtem Zeitvorlauf von 60 Sekunden bis etwa 160 Sekunden ab Empfang; unter Last oder bei Stillstand länger), kein Offline-Postfach.
 - **NIP-40 `expiration`:** bereits abgelaufene Ereignisse werden abgelehnt, beim Lesen herausgefiltert (gepatchtes strfry) und durch den internen Ablaufindex-Cron entfernt. Der externe 2-Minuten-Job führt nur `delete --age 93600` aus; sein Erfolgsstempel überwacht die Altersbereinigung, nicht den internen Cron.
-- **NIP-42 AUTH standardmäßig aus.** Im aktuellen Quellstand optional eingeschränktes Lesen auf eigenen Relays; siehe Authentifizierung. Schreiben und Ressourcenlimits bleiben unverändert.
+- **NIP-42 AUTH:** aus bei einfachem `setup.sh`, ein mit der mitgelieferten `install.sh` / `AUTH=yes`. Die ausdrückliche Auswahl steht unter Authentifizierung. Schreiben und Ressourcenlimits bleiben unverändert.
 
 | Grenze | Mechanismus |
 |---|---|
@@ -131,7 +135,7 @@ Siehe [beide Wege und Vergleich](docs/deployment.de.md). Es gibt noch kein öffe
 
 ## Installation
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.7` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.8` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
 Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
 
@@ -148,20 +152,20 @@ Bei Anmeldung als root kann `sudo` entfallen.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.7.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.7/neighbors-relay-v0.1.0-test.7.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.8.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.8/neighbors-relay-v0.1.0-test.8.tar.gz
 ```
 
 2. In derselben SSH-Sitzung die festgelegte Prüfsumme prüfen, dann entpacken und den Assistenten starten:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' 'b8a6e05a86800f29c4224f027ffd3b85e5f566204f372ec864ef839899f7e2ad' 'neighbors-relay-v0.1.0-test.7.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_8_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.8.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.8.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_7_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.7-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
+Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.8-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
 
 ### Wertedatei statt Rückfragen
 
@@ -178,7 +182,7 @@ Ist `DOMAIN` leer, fragt der Befehl zuerst nach der Domain. Es laufen dieselben 
 Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
 
 ```sh
-git clone --branch v0.1.0-test.7 --single-branch \
+git clone --branch v0.1.0-test.8 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 

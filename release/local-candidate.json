@@ -1,9 +1,9 @@
 {
   "status": "private-test-candidate",
-  "version": "v0.1.0-test.7",
+  "version": "v0.1.0-test.8",
   "sha256": "be71c12620a1eee1fcc436b9ce0dfa0ce7cb69f2747a5cd00062b811b1c3a18d",
   "patch_sha256": "c6d67a1e8103bc538a70409ec92484636d3e3ddaec62f65b00022796d0634407",
   "caddy_version": "2.11.7",
   "prepared_at": "2026-10-22",
-  "clean_vps_validation": "test.6 contents done 2026-10-22 (binary mode, AUTH on, external TLS, device connection); test.7 adds only the domain prompt, not re-run on a VPS"
+  "clean_vps_validation": "test.6 contents installed 2026-10-22 (binary mode, AUTH on, external TLS, one physical-device connection); test.7 domain prompt and test.8 language fix not re-run on a VPS; two-device exchange and remaining deployment checks pending"
 }

@@ -6,14 +6,16 @@
 is in `scripts/setup-relay.py`, `scripts/install.sh` and this kit's configuration files. Read them
 before running as root. Cloning makes inspection possible; it does not itself make code safe.
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.7` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.8` is a test release, not a production recommendation.
 
-**Validation:** test.1 was downloaded from the private Release, checksum-verified and installed on a clean Ubuntu 24.04 VPS; external TLS and WebSocket checks passed. Test.6 includes the 60 KiB event cap, indexed-only maintenance, a 180-second smoke-policy timeout and 26-hour retention of normal events. The test.6 contents (test.7 adds only the domain prompt) were installed on a clean Ubuntu 24.04 VPS on 2026-10-22 with `install.conf` and `sudo sh install.sh` (binary mode, AUTH on); external hybrid TLS, NIP-11 and a physical-device connection passed, see the [record](test-release-test6-2026-10-22.md). Local container tests do not replace a real systemd/TLS installation. The app's relay page exists in its main branch and is not yet in a shipped build; AUTH is off by default. Test.6 includes optional `--auth`; it requires a compatible custom-relay client. See the README Authentication section.
+**Validation:** the test.6 contents were installed on a clean Ubuntu 24.04 x86_64 VPS on 2026-10-22 using `install.conf` and `sudo sh install.sh` (binary mode, AUTH on). External hybrid TLS and NIP-11 passed; the maintainer reported a connection from one physical iPhone. See the [record](test-release-test6-2026-10-22.md). Test.7 added the domain prompt; [test.8](test-release-test8-2026-10-22.md) fixes language selection and clarifies these instructions. Neither change has been re-run on a VPS. Two-device message exchange, source installation, reboot/health/timer checks and external smoke-test cleanup remain pending. Local container tests do not replace those checks. The app's relay page is in main but not yet in a shipped build; release the compatible app before recommending AUTH relays to users.
+
+**Authentication defaults:** plain `sudo sh setup.sh` without `--config` leaves AUTH off; `sudo sh setup.sh --auth` enables it. `sudo sh install.sh` reads `install.conf` with **`AUTH=yes` by default**; set `AUTH=no` there for public reads. `--auth` explicitly enables AUTH even if a values file says no. The built-in relays are unchanged.
 
 
 ## Language selection
 
-With `sudo sh setup.sh` the interactive wizard first offers a language choice. Otherwise it uses `LC_ALL`, `LC_MESSAGES`, then `LANG`, falling back to English. Select a language explicitly with `sudo sh setup.sh --lang en` (or `ru` / `de`); this also applies to `--help`, `--plan` and `--check`. System package/build tools can still print their own messages.
+With `sudo sh setup.sh` the interactive wizard first offers a language choice. For `install.sh` or `setup.sh --config <file>`, the priority is `--lang` → a non-empty `LANGUAGE` in the file → the process locale (`LC_ALL`, then `LC_MESSAGES`, then `LANG`) → English if the locale is unsupported or missing. An empty or omitted `LANGUAGE` preserves the locale; file values `en`, `ru`, `de` are case-insensitive. Select a language explicitly with `sudo sh install.sh --lang en` or `sudo sh setup.sh --lang en` (also `ru` / `de`); this applies to `--help`, `--plan` and `--check` on `setup.sh`. System package/build tools can still print their own messages.
 
 ## Prerequisites
 
@@ -33,7 +35,7 @@ its configuration merely to bypass this protection.
 
 ## Two commands after public release
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.7` is a test release, not a production recommendation.
+**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.8` is a test release, not a production recommendation.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -50,16 +52,16 @@ When logged in as root, omit `sudo`.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.7.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.7/neighbors-relay-v0.1.0-test.7.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.8.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.8/neighbors-relay-v0.1.0-test.8.tar.gz
 ```
 
 2. In the same SSH session, verify the pinned checksum before extracting and starting the wizard:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' 'b8a6e05a86800f29c4224f027ffd3b85e5f566204f372ec864ef839899f7e2ad' 'neighbors-relay-v0.1.0-test.7.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_8_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.8.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.8.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
@@ -70,7 +72,7 @@ The wizard asks for language, domain and installation mode, then shows a plan fo
 After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
-git clone --branch v0.1.0-test.7 --single-branch \
+git clone --branch v0.1.0-test.8 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 
@@ -86,8 +88,8 @@ Copy the archive and its `.sha256` file to the VPS. Verify and extract into an e
 location, not over another checkout:
 
 ```sh
-sha256sum -c neighbors-relay-v0.1.0-test.7.tar.gz.sha256
-tar -xzf neighbors-relay-v0.1.0-test.7.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.8.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.8.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -123,7 +125,7 @@ Use `--tls-timeout 600` to increase HTTPS waiting from 180 to 600 seconds.
 
 ## Values file
 
-Instead of answering the wizard, fill in `install.conf` next to `setup.sh` and run `sudo sh install.sh`. With `DOMAIN` left empty the command asks for the domain and continues without other questions. The keys: `DOMAIN` (required), `AUTH` (`yes` by default: only the app an envelope is addressed to can read it; `no` leaves reads public), `LANGUAGE` (`en`, `ru`, `de`), `NAME` and `CONTACT` (optional NIP-11 identity), `MODE` (`binary` or `source`) and `TLS_TIMEOUT`. The wrapper passes `--config install.conf --yes` to `setup.sh`; any further options win over the file. The preflight, the plan, the lock and the recovery rules are the same as for the wizard. The final summary names the relay address, the place in the app where it is entered, the meaning of the authentication setting, `--check` and the saved-state path; `--check` prints it again at any time.
+Instead of answering the wizard, fill in `install.conf` next to `setup.sh` and run `sudo sh install.sh`. With `DOMAIN` left empty the command asks for the domain and continues without other questions. The keys: `DOMAIN` (required), `AUTH` (`yes` by default: reading kind 1059 requires proof of the recipient or outer author key; `no` leaves reads public), `LANGUAGE` (`en`, `ru`, `de`), `NAME` and `CONTACT` (optional NIP-11 identity), `MODE` (`binary` or `source`) and `TLS_TIMEOUT`. The wrapper passes `--config install.conf --yes` to `setup.sh`; any further options win over the file. The preflight, the plan, the lock and the recovery rules are the same as for the wizard. The final summary names the relay address, the place in the app where it is entered, the meaning of the authentication setting, `--check` and the saved-state path; `--check` prints it again at any time.
 
 ## Verification and recovery
 
@@ -168,7 +170,7 @@ operator updates; follow the [upgrade/rollback guide](caddy.md#upgrading).
 
 ## Create the local bundle
 
-On the preparation machine with `out/v0.1.0-test.7` and Python 3.11+:
+On the preparation machine with `out/v0.1.0-test.8` and Python 3.11+:
 
 ```sh
 python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz

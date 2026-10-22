@@ -52,9 +52,12 @@ def choose_language(argv):
     early.add_argument('--config')
     choice, _ = early.parse_known_args(argv)
     if choice.lang is None and choice.config:
-        # A LANGUAGE line in the values file; any problem with the file is reported by main().
+        # An explicit LANGUAGE overrides the locale; an empty value keeps it.
+        # read_values validates supported values case-insensitively. File errors are reported by main().
         try:
-            default = read_values(Path(choice.config)).get('LANGUAGE', default)
+            configured = read_values(Path(choice.config)).get('LANGUAGE', '').lower()
+            if configured:
+                default = configured
         except (SetupError, OSError):
             pass
         default = default if default in CATALOGS else 'en'
