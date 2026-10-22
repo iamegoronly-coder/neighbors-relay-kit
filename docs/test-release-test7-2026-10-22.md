@@ -21,7 +21,16 @@ Canonical binary SHA-256 (unchanged):
 
 ## Local validation of the packaged archive
 
-VALIDATION_PLACEHOLDER
+Source tag `v0.1.0-test.7` points to the "release: prepare test.7" commit; all 92 packaged repository
+files match that tag byte for byte and all payload hashes match the manifest.
+`tests/run-unit-tests.sh`: 76 unit tests and shell syntax PASS in the checkout and from the
+extracted archive.
+
+Archive SHA-256:
+`b8a6e05a86800f29c4224f027ffd3b85e5f566204f372ec864ef839899f7e2ad`.
+
+No existing archive or tag was replaced. All six main-branch README/quickstart commands pin
+this hash; immutable bundled instructions use the release-notes placeholder by design.
 
 ## Gates before users/public publication
 
