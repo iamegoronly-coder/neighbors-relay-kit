@@ -17,8 +17,8 @@ Nothing yet.
 - English, Russian and German instructions distinguish AUTH-off `setup.sh` from AUTH-on
   `install.sh`, explain explicit selection and the language priority, and separate the reported
   one-iPhone connection from the pending two-device message exchange.
-- Prepared for public prerelease; two-device and remaining deployment checks are pending. Previous
-  tags and archives remain unchanged. Relay policy, binary, patch and toolchain are unchanged. [Record](docs/test-release-test8-2026-10-22.md).
+- Published as an experimental public prerelease; anonymous archive download and SHA-256 verified.
+  Two-device and remaining deployment checks are pending. Previous tags and archives remain unchanged. Relay policy, binary, patch and toolchain are unchanged. [Record](docs/test-release-test8-2026-10-22.md).
 
 ## v0.1.0-test.7 — 2026-10-22
 

@@ -1,7 +1,7 @@
 # v0.1.0-test.8 — installer language and publication preparation
 
-Date: 2026-10-22. Prepared for an experimental public prerelease with maintainer authorization.
-Publication verification is recorded below when completed. Earlier tags and archives remain unchanged.
+Date: 2026-10-22. Published as an experimental public prerelease with maintainer authorization.
+Publication verification is recorded below. Earlier tags and archives remain unchanged.
 
 ## Changes since test.7
 
@@ -64,9 +64,28 @@ while preparing this candidate.
 
 ## Publication verification
 
-Pending: publish the exact tagged archive as a GitHub prerelease and verify public repository
-access and anonymous archive download against the pinned SHA-256. The maintainer authorized
-this publication separately from the two-device test, which they will perform later.
+Published on 2026-10-22 at 09:27:21 UTC:
+[GitHub prerelease](https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/tag/v0.1.0-test.8).
+The maintainer authorized this separately from the two-device test, which they will perform later.
+
+- Anonymous GitHub API confirms repository visibility `public`, release `prerelease: true`
+  and `draft: false`.
+- Both assets downloaded without credentials: `neighbors-relay-v0.1.0-test.8.tar.gz`
+  (52,608,040 bytes) and its `.sha256` file (103 bytes). Archive hash matches the pinned
+  SHA-256 above and the original local archive; the checksum file names that same archive.
+- The annotated tag object is still `2d50c1bbca4b1056a0d610bc4e7fcf60f4deb4e6`, pointing at
+  source commit `3fce7a4ec40015ca4ebd10aa77a490c82bfdf649`. No tag or asset was replaced.
+- Published release notes match the prepared text after newline normalization. LICENSE,
+  SECURITY and EN/RU/DE quickstarts are publicly accessible.
+- Private vulnerability reporting remains disabled at the maintainer's request. Current
+  SECURITY documents in all three languages explain how to request a private contact channel
+  without posting vulnerability details publicly. Use the current policy, not the older
+  preparation-time SECURITY file bundled in the immutable archive.
+- A targeted credential-pattern check of all 287 Git-history blobs and 100 archive files
+  found no matches for private keys, common provider tokens, credential-bearing URLs or
+  quoted secret assignments. No credential-like filenames were found in the Git history;
+  domain/name/contact values in the supplied `install.conf` are empty. This is a targeted
+  check, not a guarantee against every possible form of sensitive data.
 
 The tag and archive retain their original preparation-time documentation, including the
 private-candidate wording and checksum placeholder. They are not repacked or retagged.
