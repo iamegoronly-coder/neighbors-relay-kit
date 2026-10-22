@@ -7,9 +7,9 @@
 Можно прочитать их до запуска. Клонирование само по себе не делает запускаемый код безопасным;
 оно позволяет проверить код и выбрать конкретную версию до выдачи ей прав root.
 
-**Статус:** репозиторий и Release остаются приватными. Эти HTTPS-команды без авторизации подготовлены для будущей публикации; сейчас без доступа к репозиторию они завершатся ошибкой (обычно HTTP 404). Они не меняют приватность. `v0.1.0-test.5` — тестовый выпуск, а не рекомендация для рабочего сервера.
+**Статус:** репозиторий и Release остаются приватными. Эти HTTPS-команды без авторизации подготовлены для будущей публикации; сейчас без доступа к репозиторию они завершатся ошибкой (обычно HTTP 404). Они не меняют приватность. `v0.1.0-test.6` — тестовый выпуск, а не рекомендация для рабочего сервера.
 
-**Проверки:** test.1 скачан из приватного Release, проверен по SHA-256 и установлен на чистый VPS с Ubuntu 24.04; внешние проверки TLS и WebSocket прошли. Test.5 включает лимит события 60 KiB, очистку только по индексу возраста, тайм-аут smoke-проверки 180 секунд и хранение обычных событий 26 ч. Установка test.5 на новый чистый VPS ещё предстоит: прежний сервер удалён. Локальные контейнерные тесты не заменяют проверку настоящих systemd/TLS. Экран «Реле» уже есть в main приложения, но ещё не вышел в сборке; AUTH по умолчанию выключен. Test.5 содержит опциональный `--auth`, требующий совместимого клиента. См. раздел README об аутентификации.
+**Проверки:** test.1 скачан из приватного Release, проверен по SHA-256 и установлен на чистый VPS с Ubuntu 24.04; внешние проверки TLS и WebSocket прошли. Test.6 включает лимит события 60 KiB, очистку только по индексу возраста, тайм-аут smoke-проверки 180 секунд и хранение обычных событий 26 ч. Содержимое test.6 установлено на чистый VPS с Ubuntu 24.04 22 октября 2026 через `install.conf` и `sudo sh install.sh` (бинарный режим, AUTH включён); внешний гибридный TLS, NIP-11 и подключение с устройства прошли, см. [запись (EN)](test-release-test6-2026-10-22.md). Локальные контейнерные тесты не заменяют проверку настоящих systemd/TLS. Экран «Реле» уже есть в main приложения, но ещё не вышел в сборке; AUTH по умолчанию выключен. Test.6 содержит опциональный `--auth`, требующий совместимого клиента. См. раздел README об аутентификации.
 
 
 ## Выбор языка
@@ -34,7 +34,7 @@
 
 ## Две команды после публичного выпуска
 
-**Статус:** репозиторий и Release остаются приватными. Эти HTTPS-команды без авторизации подготовлены для будущей публикации; сейчас без доступа к репозиторию они завершатся ошибкой (обычно HTTP 404). Они не меняют приватность. `v0.1.0-test.5` — тестовый выпуск, а не рекомендация для рабочего сервера.
+**Статус:** репозиторий и Release остаются приватными. Эти HTTPS-команды без авторизации подготовлены для будущей публикации; сейчас без доступа к репозиторию они завершатся ошибкой (обычно HTTP 404). Они не меняют приватность. `v0.1.0-test.6` — тестовый выпуск, а не рекомендация для рабочего сервера.
 
 Для **чистого VPS с Ubuntu 24.04 x86_64**, systemd и синхронизацией NTP. Заранее направьте домен на VPS и откройте TCP 80/443. Для готового файла нужно около 1 ГиБ RAM и минимум 4 ГиБ свободно на `/var/lib`.
 
@@ -51,16 +51,16 @@ sudo apt-get update && sudo apt-get -o DPkg::Lock::Timeout=600 install -y ca-cer
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.5.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.5/neighbors-relay-v0.1.0-test.5.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.6.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.6/neighbors-relay-v0.1.0-test.6.tar.gz
 ```
 
 2. В той же SSH-сессии проверьте закреплённую сумму, затем распакуйте архив и запустите мастер:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' '457b11c75de953abf053952d0c299ee32896cd746119882c1925433916436fb4' 'neighbors-relay-v0.1.0-test.5.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.5.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_6_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.6.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
@@ -71,7 +71,7 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
 После публикации можно клонировать тот же конкретный тег по HTTPS и выбрать сборку. Сейчас приватный репозиторий по-прежнему требует доступа. Используйте новый каталог; существующее реле мастер не заменяет.
 
 ```sh
-git clone --branch v0.1.0-test.5 --single-branch \
+git clone --branch v0.1.0-test.6 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 
@@ -87,8 +87,8 @@ git clone --branch v0.1.0-test.5 --single-branch \
 в пустой рабочий каталог (не поверх другой копии):
 
 ```sh
-sha256sum -c neighbors-relay-v0.1.0-test.5.tar.gz.sha256
-tar -xzf neighbors-relay-v0.1.0-test.5.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.6.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -171,7 +171,7 @@ Caddy требует плановых обновлений оператором:
 
 ## Собрать локальный архив
 
-На машине подготовки, где есть `out/v0.1.0-test.5` (Python 3.11+):
+На машине подготовки, где есть `out/v0.1.0-test.6` (Python 3.11+):
 
 ```sh
 python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz

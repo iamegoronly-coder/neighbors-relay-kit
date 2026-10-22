@@ -6,6 +6,13 @@ Dates are the day the tag was created. Validation records live in `docs/`.
 
 ## Unreleased
 
+Nothing yet.
+
+## v0.1.0-test.6 — 2026-10-22
+
+- First clean-VPS installation of the kit's current contents: `install.conf` with AUTH on,
+  `sudo sh install.sh`, external hybrid TLS and NIP-11 checks, and the companion app connecting
+  from a physical iPhone. [Record](docs/test-release-test6-2026-10-22.md).
 - Documentation consistency test (`tests/test_docs.py`): relative links and heading anchors,
   the six install commands naming one candidate and one checksum, retention numbers quoted
   in the READMEs. Runs with `tests/run-unit-tests.sh` and in CI.

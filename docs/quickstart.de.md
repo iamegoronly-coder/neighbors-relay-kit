@@ -4,9 +4,9 @@
 
 `setup.sh` installiert Abhängigkeiten, Caddy, Relay und Timer und prüft HTTPS. Die Umsetzung steht in `scripts/setup-relay.py`, `scripts/install.sh` und den Konfigurationsdateien. Prüfen Sie diese vor der Ausführung als root. Klonen ermöglicht eine Prüfung, garantiert aber keine Sicherheit.
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.5` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.6` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
-**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.5 enthält die Ereignisgrenze von 60 KiB, die ausschließlich altersindizierte Wartung, ein 180-Sekunden-Limit für den Policy-Smoke-Test und 26 Stunden Aufbewahrung normaler Ereignisse. Die Neuinstallation von test.5 auf einem frischen VPS steht noch aus; der frühere Testserver wurde gelöscht. Lokale Containertests ersetzen keine echte systemd/TLS-Installation. Die Relay-Seite der App liegt im main-Zweig und ist noch in keiner veröffentlichten Version; AUTH bleibt standardmäßig aus. Test.5 enthält optionales `--auth` und benötigt dafür einen kompatiblen Client; siehe Authentifizierung im README.
+**Prüfung:** test.1 wurde aus dem privaten Release heruntergeladen, per SHA-256 geprüft und auf einem frischen Ubuntu-24.04-VPS installiert; externe TLS- und WebSocket-Prüfungen bestanden. Test.6 enthält die Ereignisgrenze von 60 KiB, die ausschließlich altersindizierte Wartung, ein 180-Sekunden-Limit für den Policy-Smoke-Test und 26 Stunden Aufbewahrung normaler Ereignisse. Der Inhalt von test.6 wurde am 22. Oktober 2026 über `install.conf` und `sudo sh install.sh` auf einem frischen Ubuntu-24.04-VPS installiert (Binärmodus, AUTH ein); externes hybrides TLS, NIP-11 und eine Verbindung von einem Gerät waren erfolgreich, siehe [Protokoll (EN)](test-release-test6-2026-10-22.md). Lokale Containertests ersetzen keine echte systemd/TLS-Installation. Die Relay-Seite der App liegt im main-Zweig und ist noch in keiner veröffentlichten Version; AUTH bleibt standardmäßig aus. Test.6 enthält optionales `--auth` und benötigt dafür einen kompatiblen Client; siehe Authentifizierung im README.
 
 
 ## Sprachauswahl
@@ -25,7 +25,7 @@ Der Assistent zeigt DNS-Adressen, beweist aber nicht, dass sie diesem VPS gehör
 
 ## Zwei Befehle nach öffentlicher Veröffentlichung
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.5` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.6` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
 Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
 
@@ -42,16 +42,16 @@ Bei Anmeldung als root kann `sudo` entfallen.
 ```sh
 relay_work=$(mktemp -d -t neighbors-relay.XXXXXXXX) &&
 curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
-  --output "$relay_work/neighbors-relay-v0.1.0-test.5.tar.gz" \
-  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.5/neighbors-relay-v0.1.0-test.5.tar.gz
+  --output "$relay_work/neighbors-relay-v0.1.0-test.6.tar.gz" \
+  https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/download/v0.1.0-test.6/neighbors-relay-v0.1.0-test.6.tar.gz
 ```
 
 2. In derselben SSH-Sitzung die festgelegte Prüfsumme prüfen, dann entpacken und den Assistenten starten:
 
 ```sh
 (cd "${relay_work:?Run the download command first}" &&
-  printf '%s  %s\n' '457b11c75de953abf053952d0c299ee32896cd746119882c1925433916436fb4' 'neighbors-relay-v0.1.0-test.5.tar.gz' | sha256sum --check - &&
-  tar -xzf neighbors-relay-v0.1.0-test.5.tar.gz &&
+  printf '%s  %s\n' 'COPY_SHA256_FROM_TEST_6_RELEASE_NOTES' 'neighbors-relay-v0.1.0-test.6.tar.gz' | sha256sum --check - &&
+  tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz &&
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
@@ -62,7 +62,7 @@ Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Pl
 Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
 
 ```sh
-git clone --branch v0.1.0-test.5 --single-branch \
+git clone --branch v0.1.0-test.6 --single-branch \
   https://github.com/iamegoronly-coder/neighbors-relay-kit.git neighbors-relay-source
 ```
 
@@ -77,8 +77,8 @@ Der Quellmodus lädt festgelegte Quellen und kompiliert das Relay, statt eine fe
 Archiv und `.sha256` auf den VPS kopieren, prüfen und in ein leeres Arbeitsverzeichnis entpacken, nicht über einen vorhandenen Checkout:
 
 ```sh
-sha256sum -c neighbors-relay-v0.1.0-test.5.tar.gz.sha256
-tar -xzf neighbors-relay-v0.1.0-test.5.tar.gz
+sha256sum -c neighbors-relay-v0.1.0-test.6.tar.gz.sha256
+tar -xzf neighbors-relay-v0.1.0-test.6.tar.gz
 cd neighbors-relay
 sudo sh setup.sh
 ```
@@ -139,7 +139,7 @@ Die Installation ändert weder SSH, Firewall noch DNS, legt keinen Swap an und s
 
 ## Lokales Paket erstellen
 
-Auf dem Vorbereitungsrechner mit `out/v0.1.0-test.5` und Python 3.11+:
+Auf dem Vorbereitungsrechner mit `out/v0.1.0-test.6` und Python 3.11+:
 
 ```sh
 python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz
