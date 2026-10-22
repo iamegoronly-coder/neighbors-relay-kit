@@ -4,7 +4,7 @@
 
 `setup.sh` installiert Abhängigkeiten, Caddy, Relay und Timer und prüft HTTPS. Die Umsetzung steht in `scripts/setup-relay.py`, `scripts/install.sh` und den Konfigurationsdateien. Prüfen Sie diese vor der Ausführung als root. Klonen ermöglicht eine Prüfung, garantiert aber keine Sicherheit.
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.8` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** `v0.1.0-test.8` ist eine experimentelle Vorabversion zum Testen, kein stabiles Release und keine Empfehlung für den Produktivbetrieb. Die Verfügbarkeit steht unter [GitHub Releases](https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/tag/v0.1.0-test.8). Die Zustellung zwischen zwei Geräten und die verbleibenden Bereitstellungsprüfungen stehen noch aus; siehe [Prüfprotokoll](test-release-test8-2026-10-22.md). Die Veröffentlichung von Quellen und Vorabversion bestätigt diese Prüfungen nicht.
 
 **Prüfung:** der Inhalt von test.6 wurde am 22. Oktober 2026 auf einem frischen Ubuntu-24.04-x86_64-VPS mit `install.conf` und `sudo sh install.sh` installiert (Binärmodus, AUTH ein). Externe Prüfungen von Hybrid-TLS und NIP-11 waren erfolgreich; der Projektbetreiber bestätigte eine Verbindung von einem physischen iPhone. Siehe [Protokoll (EN)](test-release-test6-2026-10-22.md). Test.7 ergänzte die Domain-Abfrage; [test.8 (EN)](test-release-test8-2026-10-22.md) korrigiert die Sprachauswahl und präzisiert diese Anleitung. Diese Änderungen wurden nicht erneut auf einem VPS ausgeführt. Ausstehend sind Nachrichtenaustausch zwischen zwei Geräten, Quellcodeinstallation, Neustart-/Health-/Timer-Prüfungen und externer Smoke-Test mit Bereinigung. Lokale Containertests ersetzen diese Prüfungen nicht. Die Relay-Seite ist in main der App, aber noch nicht in einer veröffentlichten Version; vor einer Empfehlung von AUTH-Relays muss die kompatible App erscheinen.
 
@@ -25,9 +25,8 @@ Bei `sudo sh setup.sh` fragt der interaktive Assistent zuerst nach der Sprache. 
 
 Der Assistent zeigt DNS-Adressen, beweist aber nicht, dass sie diesem VPS gehören. Vergleichen Sie diese mit dem Hosting-Panel. Vorhandene Caddy-/Relay-Dateien oder belegte Ports 80/443/7777 stoppen die Installation. Für vorhandene Server gilt die [manuelle Anleitung](deployment.de.md); löschen Sie keine Konfiguration, um diese Prüfung zu umgehen.
 
-## Zwei Befehle nach öffentlicher Veröffentlichung
+## Öffentlichen Prerelease herunterladen
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.8` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
 
 Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
 
@@ -57,11 +56,11 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Die Prüfsumme steht fest in dieser Anleitung und stammt nicht nur aus einem benachbarten Download; sie ist keine Release-Signatur.
+Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Öffentliche Release-Downloads benötigen weder GitHub CLI noch Token. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Die Prüfsumme steht fest in dieser Anleitung und stammt nicht nur aus einem benachbarten Download; sie ist keine Release-Signatur.
 
 ### Klonen und aus Quellen bauen
 
-Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
+Denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
 
 ```sh
 git clone --branch v0.1.0-test.8 --single-branch \
@@ -149,6 +148,6 @@ python3 scripts/package-local.py --output out/neighbors-relay-local.tar.gz
 
 Das Packwerkzeug prüft Binärdatei, Quellen, Patch, Toolchain-Lock und Manifest. Es übernimmt nur freigegebene Kit-Verzeichnisse und Kandidatendateien, schließt `.git`, andere `out`-Dateien, die `.env` im Stammverzeichnis und Python-Caches aus und lehnt symbolische Links ab. Keine Geheimnisse in Dokumentation/Konfiguration/Skripten ablegen: Diese Verzeichnisse werden übernommen. Vorhandene Archive werden nie überschrieben. Nichts wird hochgeladen.
 
-## Vor dem öffentlichen Start
+## Vor einem stabilen Release
 
-Vor dem öffentlichen Start das endgültige Release auswählen und prüfen, Tag, Archivname und festgelegten SHA-256 gemeinsam in allen drei READMEs und Schnellstartanleitungen aktualisieren und beide Wege auf frischen VPS testen. Nach Veröffentlichung anonymen Download von einem Rechner ohne GitHub-Zugangsdaten prüfen. Keine vorhandenen Release-Dateien ersetzen, um eine alte Prüfsumme passend zu machen. Sichtbarkeitsänderungen benötigen eine separate Entscheidung; diese Anleitung erteilt keine Freigabe zur Veröffentlichung.
+Eine experimentelle Vorabversion darf mit ausdrücklich aufgeführten offenen Prüfungen veröffentlicht werden. Vor einer Empfehlung als stabiles Release den Austausch zwischen zwei Geräten und die verbleibenden Prüfungen auf einem frischen VPS aus dem [Prüfprotokoll](test-release-test8-2026-10-22.md) abschließen. Für jedes neue Release Tag, Archivname und festgelegten SHA-256 gemeinsam in allen drei READMEs und Schnellstartanleitungen aktualisieren. Den öffentlichen Download ohne GitHub-Zugangsdaten prüfen. Vorhandene Tags oder Release-Dateien niemals ersetzen, um eine alte Prüfsumme passend zu machen.

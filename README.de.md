@@ -9,7 +9,7 @@ Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-V
 > **Status.** Das Kit stellt ein Relay bereit und ändert keine Client-Einstellungen automatisch.
 > Ein eigenes Relay setzt die App-Version mit der Relay-Seite voraus (Chat-Einstellungen → Internet → Relay);
 > seit dem 21. Oktober 2026 liegt sie im main-Zweig der App und ist noch in keiner veröffentlichten Version.
-> Repository und Test-Releases bleiben privat; Veröffentlichungsstatus siehe unten.
+> Dies ist eine experimentelle Vorabversion; ausstehende Prüfungen sind unten aufgeführt.
 
 [Relay-/Client-Grenzen und Prüfergebnisse (2026-10-21, EN)](docs/relay-client-audit-2026-10-21.md).
 
@@ -27,7 +27,7 @@ Ziel der ersten Veröffentlichung: **ein eigener, frischer Ubuntu-24.04-x86_64-V
 2. Die zwei Befehle aus [Installation](#installation): das festgelegte Archiv laden, SHA-256 prüfen, entpacken und `sudo sh setup.sh` starten. Der Assistent fragt Sprache, Domain und Modus, zeigt einen Plan und richtet nach Bestätigung Caddy, Relay und Timer ein. Oder `sudo sh install.sh`: fragt nur nach der Domain und installiert mit eingeschalteter Authentifizierung.
 3. Am Ende gibt der Assistent `wss://ihre-domain/relay` aus; diese Adresse wird in der App als eigenes Relay eingetragen. Prüfung jederzeit: `sudo sh setup.sh --check`.
 
-Details, nicht interaktiver Modus und Wiederherstellung: [docs/quickstart.de.md](docs/quickstart.de.md). Solange das Repository privat ist, antworten die Download-Befehle mit 404; ein lokales Archiv wird genauso installiert, siehe Quickstart.
+Details, nicht interaktiver Modus und Wiederherstellung: [docs/quickstart.de.md](docs/quickstart.de.md). Die Befehle verwenden anonyme HTTPS-Downloads; ein lokales Archiv wird genauso installiert, siehe Quickstart.
 
 ## Was das Relay sieht
 
@@ -131,11 +131,11 @@ Dies schützt nur den Transport bis zum TLS-terminierenden Server. Die bestehend
 
 Aus Quellen bauen oder veröffentlichte Binärdatei mit demselben Dienst-/Konfigurationsinstaller installieren. Für unabhängige Prüfung den festgelegten kanonischen Docker-Build verwenden und bytegenau mit dem Release vergleichen. Der native Ubuntu-Build bleibt verfügbar; andere Compiler-/Bibliotheksversionen können andere Hashes erzeugen.
 
-Siehe [beide Wege und Vergleich](docs/deployment.de.md). Es gibt noch kein öffentliches GitHub Release und keine Signaturidentität. Der lokale Assistent `setup.sh` richtet auf einem neuen VPS Abhängigkeiten, Caddy, Domain, Relay und Timer ein. Der Installer erhält exakt die geprüften Binärbytes. Zwei saubere lokale kanonische Builds waren bytegleich; siehe [Prüfbericht](docs/reproducibility-check-2026-10-15.de.md). Die Prüfung auf unabhängigem Host steht aus.
+Siehe [beide Wege und Vergleich](docs/deployment.de.md). Dies ist eine experimentelle Vorabversion; eine Signaturidentität ist noch nicht eingerichtet. Der lokale Assistent `setup.sh` richtet auf einem neuen VPS Abhängigkeiten, Caddy, Domain, Relay und Timer ein. Der Installer erhält exakt die geprüften Binärbytes. Zwei saubere lokale kanonische Builds waren bytegleich; siehe [Prüfbericht](docs/reproducibility-check-2026-10-15.de.md). Die Prüfung auf unabhängigem Host steht aus.
 
 ## Installation
 
-**Status:** Repository und Releases bleiben privat. Diese anonymen HTTPS-Befehle sind für eine spätere Veröffentlichung vorbereitet; ohne Repository-Zugriff schlagen sie derzeit fehl (meist HTTP 404). Sie ändern die Sichtbarkeit nicht. `v0.1.0-test.8` ist eine Testversion, keine Empfehlung für den Produktivbetrieb.
+**Status:** `v0.1.0-test.8` ist eine experimentelle Vorabversion zum Testen, kein stabiles Release und keine Empfehlung für den Produktivbetrieb. Die Verfügbarkeit steht unter [GitHub Releases](https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/tag/v0.1.0-test.8). Die Zustellung zwischen zwei Geräten und die verbleibenden Bereitstellungsprüfungen stehen noch aus; siehe [Prüfprotokoll](docs/test-release-test8-2026-10-22.md). Die Veröffentlichung von Quellen und Vorabversion bestätigt diese Prüfungen nicht.
 
 Für einen **frischen Ubuntu-24.04-x86_64-VPS** mit systemd und synchronisierter NTP-Uhr. Zuerst die Domain auf den VPS richten und TCP 80/443 freigeben. Die Binärinstallation braucht etwa 1 GiB RAM und mindestens 4 GiB freien Speicher auf `/var/lib`.
 
@@ -165,7 +165,7 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Nach Veröffentlichung sind weder GitHub CLI noch Token nötig. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.8-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
+Der Assistent fragt nach Sprache, Domain und Installationsart und zeigt einen Plan zur Bestätigung. Für die mitgelieferte Binärdatei **1** wählen. Öffentliche Release-Downloads benötigen weder GitHub CLI noch Token. Das Archiv bleibt in `$relay_work`; HTTP- oder Prüfsummenfehler vor dem Fortfahren beheben. Geprüfte, entpackte Skripte können vor `sudo sh setup.sh` gelesen werden. Im README des Quell-Tags/Archivs ersetzen Sie `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` durch den Archiv-SHA-256 aus den test.8-Release-Notizen. Das README auf main enthält den Hash nach dem Packen; ein Archiv kann seine eigene Prüfsumme nicht enthalten. Dies ist keine Release-Signatur.
 
 ### Wertedatei statt Rückfragen
 
@@ -179,7 +179,7 @@ Ist `DOMAIN` leer, fragt der Befehl zuerst nach der Domain. Es laufen dieselben 
 
 ### Klonen und aus Quellen bauen
 
-Nach Veröffentlichung denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Das private Repository erfordert derzeit weiterhin Zugriff. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
+Denselben konkreten Tag per HTTPS klonen und aus Quellen bauen. Ein neues Verzeichnis verwenden; vorhandene Relay-Installationen werden nicht ersetzt.
 
 ```sh
 git clone --branch v0.1.0-test.8 --single-branch \

@@ -60,10 +60,30 @@ Replace the placeholder in the six install documents with the archive SHA-256 fr
 `out/neighbors-relay-v0.1.0-test.N.tar.gz.sha256`, add the checksum to the record and commit as
 `docs: pin test.N archive …`. `tests/test_docs.py` checks that all six agree and match the archive.
 
-## 6. Gates before anyone installs it
+## 6. Publish an experimental prerelease
 
-- A clean dedicated Ubuntu 24.04 x86_64 VPS in default and `--auth` modes, binary and source
-  paths, real Caddy/systemd/NTP, external classic and hybrid TLS, smoke test and cleanup.
-- The companion app on physical devices against that VPS.
-- Public visibility decided separately; afterwards an anonymous download check from a machine
-  without GitHub credentials. Never replace a published asset to make an old checksum work.
+Public source visibility and a test prerelease do not require all stable-release acceptance
+checks to be complete. They require an explicit publication decision, the exact validated tag
+and archive, LICENSE and SECURITY documentation, and a clear list of remaining checks.
+
+1. Push the reviewed main branch and the specific annotated tag. Do not move existing tags.
+2. Open the repository when authorized, and publish the exact archive and its checksum as a
+   GitHub **prerelease**, not as a stable/latest release.
+3. Release notes must distinguish completed checks from pending physical-device and VPS tests.
+   Tagged/bundled documentation is an immutable preparation snapshot: point readers to current
+   main-branch instructions and supply the archive checksum in the release notes.
+4. Verify repository visibility, prerelease metadata and anonymous download without GitHub
+   credentials. Compare the downloaded archive with the pinned SHA-256 and record the result.
+   Never replace a published asset to make an old checksum work.
+
+## 7. Acceptance before a stable recommendation
+
+- Complete the outstanding clean Ubuntu 24.04 x86_64 deployment checks in default and AUTH
+  modes, binary and source paths, real Caddy/systemd/NTP, external classic and hybrid TLS,
+  reboot, timer/prune health, smoke test and cleanup. Preserve credit for already completed checks.
+- Verify the companion app on two physical devices: selected-network address exchange,
+  private and group delivery, recipient receipts, reconnect/backfill and no duplicates.
+- Ship the compatible app with its relay-selection page before recommending AUTH relays to
+  ordinary users. Custom relays do not support gateways or couriers.
+
+See the current candidate's validation record for evidence and the exact outstanding items.

@@ -6,7 +6,7 @@
 is in `scripts/setup-relay.py`, `scripts/install.sh` and this kit's configuration files. Read them
 before running as root. Cloning makes inspection possible; it does not itself make code safe.
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.8` is a test release, not a production recommendation.
+**Status:** `v0.1.0-test.8` is an experimental prerelease for evaluation, not a stable release or a production recommendation. Check [GitHub Releases](https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/tag/v0.1.0-test.8) for availability. Two-device delivery and the remaining deployment checks are still pending; see the [validation record](test-release-test8-2026-10-22.md). Publishing the source and prerelease does not mark those checks as passed.
 
 **Validation:** the test.6 contents were installed on a clean Ubuntu 24.04 x86_64 VPS on 2026-10-22 using `install.conf` and `sudo sh install.sh` (binary mode, AUTH on). External hybrid TLS and NIP-11 passed; the maintainer reported a connection from one physical iPhone. See the [record](test-release-test6-2026-10-22.md). Test.7 added the domain prompt; [test.8](test-release-test8-2026-10-22.md) fixes language selection and clarifies these instructions. Neither change has been re-run on a VPS. Two-device message exchange, source installation, reboot/health/timer checks and external smoke-test cleanup remain pending. Local container tests do not replace those checks. The app's relay page is in main but not yet in a shipped build; release the compatible app before recommending AUTH relays to users.
 
@@ -33,9 +33,8 @@ against your hosting panel. Existing Caddy/relay files or listeners on 80/443/77
 before installation. Use the [manual guide](deployment.md) for an existing server; do not delete
 its configuration merely to bypass this protection.
 
-## Two commands after public release
+## Download the public prerelease
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.8` is a test release, not a production recommendation.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -65,11 +64,11 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. The checksum is pinned here rather than trusted only from a neighboring download; it is not a release signature.
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. Public release downloads do not require GitHub CLI or a token. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. The checksum is pinned here rather than trusted only from a neighboring download; it is not a release signature.
 
 ### Clone and build from source
 
-After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
+Clone the same specific tag over HTTPS and run source mode. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
 git clone --branch v0.1.0-test.8 --single-branch \
@@ -181,6 +180,6 @@ allowlisted kit directories and candidate assets, excluding `.git`, other `out` 
 and Python caches, and refusing symlinks. Keep secrets out of documentation/configuration/script
 directories: their contents are included. Existing archives are never overwritten. Nothing is uploaded.
 
-## Before public launch
+## Before a stable release
 
-Before public launch, select and validate the final release, update the tag, asset name and pinned archive SHA-256 together in all three READMEs and quickstarts, and test both paths on clean VPSs. After publication, verify an anonymous download from a machine without GitHub credentials. Never replace an existing release asset to make an old checksum work. Visibility changes require a separate decision; these instructions do not authorize publication.
+An experimental prerelease may be published with the outstanding checks stated explicitly. Before recommending a stable release, complete the two-device exchange and remaining clean-VPS checks in the [validation record](test-release-test8-2026-10-22.md). For every new release, update the tag, asset name and pinned archive SHA-256 together in all three READMEs and quickstarts. Verify the public download without GitHub credentials. Never replace an existing tag or release asset to make an old checksum work.

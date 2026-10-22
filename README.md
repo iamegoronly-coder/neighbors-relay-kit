@@ -15,7 +15,7 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 > **Status.** This kit deploys a relay; it does not change client settings automatically.
 > Connecting to a custom relay needs the app release that includes the relay page (chat settings → Internet → Relay);
 > as of 2026-10-21 it is in the app's main branch and not yet in a shipped build.
-> The repository and test releases remain private; see the publication status below.
+> This is an experimental prerelease; the outstanding checks are listed below.
 
 [Relay/client boundary audit and validation (2026-10-21)](docs/relay-client-audit-2026-10-21.md).
 
@@ -33,7 +33,7 @@ First-release target: **a dedicated, clean Ubuntu 24.04 x86_64 VPS**. ARM64, Deb
 2. The two commands under [Install](#install): download the pinned archive, verify its SHA-256, extract it and run `sudo sh setup.sh`. The wizard asks for language, domain and mode, shows a plan and, once confirmed, sets up Caddy, the relay and the timers. Or run `sudo sh install.sh`: it asks only for the domain and installs with authentication on.
 3. At the end the wizard prints `wss://your-domain/relay`; that is the address users enter in the app as their own relay. Verify at any time with `sudo sh setup.sh --check`.
 
-Details, the non-interactive mode and recovery: [docs/quickstart.md](docs/quickstart.md). While the repository is private the download commands answer 404; a local archive installs the same way, see the quickstart.
+Details, the non-interactive mode and recovery: [docs/quickstart.md](docs/quickstart.md). The commands use anonymous HTTPS downloads; a local archive installs the same way, see the quickstart.
 
 ## What the relay sees — and what it does not
 
@@ -163,7 +163,7 @@ installer. For independent comparison, use the pinned canonical Docker build and
 result byte-for-byte with the release file. The native Ubuntu build remains available but is
 not guaranteed to produce the same hash with different compiler/library versions.
 
-See [both deployment paths and verification](docs/deployment.md) and [how a test candidate is cut](docs/release-process.md); [CHANGELOG.md](CHANGELOG.md) lists the candidates. Private test Releases are available; no signing identity is configured. The local `setup.sh` wizard now prepares
+See [both deployment paths and verification](docs/deployment.md) and [how a test candidate is cut](docs/release-process.md); [CHANGELOG.md](CHANGELOG.md) lists the candidates. This is an experimental prerelease; no signing identity is configured. The local `setup.sh` wizard now prepares
 dependencies, Caddy, the domain, relay and timers on a clean VPS.
 The installer preserves the exact verified binary bytes.
 Two clean local canonical builds matched byte-for-byte; see the
@@ -171,7 +171,7 @@ Two clean local canonical builds matched byte-for-byte; see the
 
 ## Install
 
-**Status:** the repository and Releases remain private. These anonymous HTTPS commands are prepared for future publication; today they will fail without repository access (typically HTTP 404). They do not change visibility. `v0.1.0-test.8` is a test release, not a production recommendation.
+**Status:** `v0.1.0-test.8` is an experimental prerelease for evaluation, not a stable release or a production recommendation. Check [GitHub Releases](https://github.com/iamegoronly-coder/neighbors-relay-kit/releases/tag/v0.1.0-test.8) for availability. Two-device delivery and the remaining deployment checks are still pending; see the [validation record](docs/test-release-test8-2026-10-22.md). Publishing the source and prerelease does not mark those checks as passed.
 
 For a **clean Ubuntu 24.04 x86_64 VPS** with systemd and synchronized NTP. Point the domain at this VPS and allow TCP 80/443 first. The binary path needs about 1 GiB RAM and at least 4 GiB free on `/var/lib`.
 
@@ -201,7 +201,7 @@ curl --fail --show-error --location --proto '=https' --proto-redir '=https' \
   cd neighbors-relay && sudo sh setup.sh)
 ```
 
-The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. No GitHub CLI or token is needed after publication. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` with the archive SHA-256 from the test.8 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
+The wizard asks for language, domain and installation mode, then shows a plan for confirmation. Choose **1** for the bundled binary. Public release downloads do not require GitHub CLI or a token. The archive is kept in `$relay_work`; an HTTP or checksum failure must be resolved before continuing. You can inspect the verified, extracted scripts before running `sudo sh setup.sh`. In the source tag/bundled README, replace `COPY_SHA256_FROM_TEST_8_RELEASE_NOTES` with the archive SHA-256 from the test.8 release notes before running the command. The main-branch README pins that hash after packaging (an archive cannot contain its own checksum). This checksum is not a release signature.
 
 ### Values file instead of questions
 
@@ -215,7 +215,7 @@ If `DOMAIN` is empty, it asks for the domain first. It runs the same preflight a
 
 ### Clone and build from source
 
-After publication, clone the same specific tag over HTTPS and run source mode. Today this private repository still requires access. Use a new directory; the wizard refuses existing relay installations.
+Clone the same specific tag over HTTPS and run source mode. Use a new directory; the wizard refuses existing relay installations.
 
 ```sh
 git clone --branch v0.1.0-test.8 --single-branch \

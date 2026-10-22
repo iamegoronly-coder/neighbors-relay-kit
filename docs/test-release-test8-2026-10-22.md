@@ -1,7 +1,7 @@
 # v0.1.0-test.8 — installer language and publication preparation
 
-Date: 2026-10-22. Private, locally prepared test candidate; not approval for public publication.
-Nothing was pushed, uploaded or published. Earlier tags and archives remain unchanged.
+Date: 2026-10-22. Prepared for an experimental public prerelease with maintainer authorization.
+Publication verification is recorded below when completed. Earlier tags and archives remain unchanged.
 
 ## Changes since test.7
 
@@ -40,14 +40,14 @@ unverified-certificate test. The isolated diagnostic run and the full checkout s
 that sandbox passed without changing the TLS helper or its tests. No real TLS connection or
 certificate verification was bypassed by these installer-language changes.
 
-## External validation and publication gates
+## External validation and outstanding checks
 
 The [test.6 record](test-release-test6-2026-10-22.md) reports a clean Ubuntu 24.04 x86_64 binary
 installation with AUTH on, external TLS/NIP-11 checks and a connection from one physical iPhone.
 It does not establish two-device message delivery. Test.7's domain prompt and test.8's language
 selection have not been re-run on that VPS.
 
-Before a user-facing release:
+Before a stable recommendation (these do not block an explicitly experimental prerelease):
 
 - The compatible app with the relay-selection page must reach users before AUTH relays are
   recommended to them; the page is currently documented as main-only.
@@ -57,9 +57,18 @@ Before a user-facing release:
   paths, AUTH on/off, `setup.sh --check` after reboot, timers/prune health over time, and the
   external smoke test with removal of its synthetic events. Credit the completed test.6 checks
   above; do not mark the remaining checks as passed based on local mocks or unit tests.
-- Decide public visibility and upload the exact tagged archive separately; then verify anonymous
-  download and the pinned SHA-256 without GitHub credentials. Never replace a published asset.
 
 ARM64, Debian and installation alongside an existing Caddy remain deferred support work,
 not additional gates for the first Ubuntu 24.04 x86_64 release. No live relay or VPS was changed
 while preparing this candidate.
+
+## Publication verification
+
+Pending: publish the exact tagged archive as a GitHub prerelease and verify public repository
+access and anonymous archive download against the pinned SHA-256. The maintainer authorized
+this publication separately from the two-device test, which they will perform later.
+
+The tag and archive retain their original preparation-time documentation, including the
+private-candidate wording and checksum placeholder. They are not repacked or retagged.
+Current main-branch instructions and GitHub release notes describe publication status and
+provide the final checksum. Use those instructions when installing the immutable archive.
